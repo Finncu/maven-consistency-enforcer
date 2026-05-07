@@ -24,7 +24,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.idea.maven</depends>
-
+<!---->
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>

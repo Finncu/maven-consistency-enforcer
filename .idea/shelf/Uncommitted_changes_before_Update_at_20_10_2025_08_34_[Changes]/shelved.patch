@@ -1,0 +1,19 @@
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"IssueNavigationConfiguration\">\r\n    <option name=\"links\">\r\n      <list>\r\n        <IssueNavigationLink>\r\n          <option name=\"issueRegexp\" value=\"[A-Z]+\\-\\d+\" />\r\n          <option name=\"linkRegexp\" value=\"https://jira.nexinsure.org/browse/$0/browse/$0\" />\r\n        </IssueNavigationLink>\r\n      </list>\r\n    </option>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+--- a/.idea/vcs.xml	(revision ca9218596b410ae36ebdb61d165cc60f31565aed)
++++ b/.idea/vcs.xml	(date 1760640559498)
+@@ -10,4 +10,7 @@
+       </list>
+     </option>
+   </component>
++  <component name="VcsDirectoryMappings">
++    <mapping directory="$PROJECT_DIR$" vcs="Git" />
++  </component>
+ </project>
+\ No newline at end of file
