@@ -1,0 +1,42 @@
+<idea-plugin>
+    <id>dev.silverhorn.fca.maven-consistency-enforcer</id>
+
+    <name>Maven Consistency Enforcer</name>
+
+    <vendor email="contact@finncu.dev">finncu</vendor>
+
+    <description>
+        <![CDATA[
+      Stop fighting ghosts in your classpath!
+
+      Maven Consistency Enforcer (MCE) solves the frustrating problem of stale JAR artifacts
+      preventing your code changes from reaching the running application in IntelliJ IDEA.
+
+      What it does:
+      - Automatically detects stale JAR artifacts from ~/.m2/repository
+      - Replaces them with direct module-to-module dependencies after Maven reloads
+      - Manual purge action to clean target/build directories
+
+      MCE ensures that what you see in your editor matches exactly what runs in your JVM.
+    ]]>
+    </description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.jetbrains.idea.maven</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService"/>
+        <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
+    </extensions>
+
+    <actions>
+        <action id="MCE.PurgeArtifacts" class="dev.silverhorn.fca.maven_consistency_enforcer.actions.PurgeArtifactAction" text="MCE: Purge Stale Artifacts" description="Delete target/build directories and enforce module consistency">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+
+    <projectListeners>
+        <listener class="dev.silverhorn.fca.maven_consistency_enforcer.listeners.MceMavenReloadListener" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+    </projectListeners>
+</idea-plugin>
