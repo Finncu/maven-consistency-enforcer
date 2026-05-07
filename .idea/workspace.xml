@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="829a2cbe-aeac-43d8-bdfd-a25001fab4f3" name="Changes" comment="" />
+    <list default="true" id="829a2cbe-aeac-43d8-bdfd-a25001fab4f3" name="Changes" comment="added pipelines and idea config">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/gradle.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/gradle.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +23,7 @@
   </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
+      <entry key="_C:/ws/a/repos/MavenConsistencyEnforcer" value="3DOZiUt4x6KKh8b4u5IM9gseinO" />
       <entry key="_C:/ws/fdm-plugin" value="341486HNT3gOOrngSPG2bKOSbrk" />
     </persistenceIdMap>
   </component>
@@ -106,12 +112,12 @@
     &quot;assignee&quot;: &quot;Finncu&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Finncu/fdm-plugin.git&quot;,
-    &quot;accountId&quot;: &quot;7117ded9-70ef-4293-be67-6a199c5a05a3&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Finncu/maven-consistency-enforcer.git",
+    "accountId": "7117ded9-70ef-4293-be67-6a199c5a05a3"
   }
-}</component>
+}]]></component>
   <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="C:\Users\cuypef\.gradle\wrapper\dists\gradle-8.11-bin\c4te04g51qsyw1bxcb929u7br\gradle-8.11" javaHome="C:\jbit_dev\java\jdk-17.0.9+9" gradleVersion="8.11" />
   <component name="HighlightingSettingsPerFile">
     <setting file="jar://$USER_HOME$/.gradle/caches/8.11/transforms/a2ab458a732de8238abb45faf73f9d1c/transformed/ideaIC-2025.2.3-win/lib/app-client.jar!/com/intellij/icons/AllIcons.class" root0="SKIP_INSPECTION" />
@@ -172,40 +178,40 @@
     <option name="showScratchesAndConsoles" value="false" />
     <option name="showVisibilityIcons" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Gradle.Build fdm-plugin.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.Run Plugin.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [buildPlugin].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [build].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [composedJar].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [jar].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [patchChangelog].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [publishPlugin].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.fdm-plugin [setupDependencies].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/ws/fdm-plugin&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.build.tools.auto.reload&quot;: &quot;SELECTIVE&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.project.gradle&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Gradle.Build fdm-plugin.executor": "Run",
+    "Gradle.Run Plugin.executor": "Run",
+    "Gradle.fdm-plugin [buildPlugin].executor": "Run",
+    "Gradle.fdm-plugin [build].executor": "Run",
+    "Gradle.fdm-plugin [composedJar].executor": "Run",
+    "Gradle.fdm-plugin [jar].executor": "Run",
+    "Gradle.fdm-plugin [patchChangelog].executor": "Run",
+    "Gradle.fdm-plugin [publishPlugin].executor": "Run",
+    "Gradle.fdm-plugin [setupDependencies].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/ws/fdm-plugin",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.build.tools.auto.reload": "SELECTIVE",
+    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\ws\fdm-plugin\.github\workflows" />
@@ -349,6 +355,14 @@
       </list>
     </recent_temporary>
   </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.28539.33" />
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-IU-252.28539.33" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -384,6 +398,7 @@
       <workItem from="1776081053312" duration="782000" />
       <workItem from="1778041691663" duration="1296000" />
       <workItem from="1778043739179" duration="1283000" />
+      <workItem from="1778155209951" duration="377000" />
     </task>
     <task id="LOCAL-00001" summary="FDM-1 - Added Performance - Added Multiple Projects - Added Thread Save Threading">
       <option name="closed" value="true" />
@@ -633,7 +648,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761902341190</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="added pipelines and idea config">
+      <option name="closed" value="true" />
+      <created>1778155262546</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1778155262546</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +712,8 @@
     <MESSAGE value="#9 - fixed two datastate bug" />
     <MESSAGE value="formatting" />
     <MESSAGE value="multi toggle - 2 ds bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="multi toggle - 2 ds bug" />
+    <MESSAGE value="added pipelines and idea config" />
+    <option name="LAST_COMMIT_MESSAGE" value="added pipelines and idea config" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fdm_plugin$Run_Plugin.ic" NAME="Run Plugin Coverage Results" MODIFIED="1760954676016" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />

@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Automatic Maven reload event detection
-- Stale JAR artifact detection and replacement with module dependencies
-- Manual purge action for target/build directories via Tools > MCE: Purge Stale Artifacts
+- removing of attached-jar's
 - Smart notifications (Info/Warning/Error) for user feedback
 - Comprehensive Maven Artifact ID extraction and module mapping logic
 - Full implementation in Kotlin with extensive KDoc comments
@@ -32,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ### Notes
-- Status Bar Widget is implemented but not registered in v1.0. See UPGRADE.md for enabling in v1.1
+- Status Bar Widget is implemented but not registered in 1.0.0
 - Maven-only in v1.0. Gradle support planned for v1.1
 - Designed following fdm-plugin best practices with Gradle version catalog and property management
 

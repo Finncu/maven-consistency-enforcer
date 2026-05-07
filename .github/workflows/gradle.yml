@@ -38,9 +38,9 @@ jobs:
         ./gradlew publishPlugin \
         -Ptoken=${{ secrets.JETBRAINS_M_TOKEN }} \
         -PpluginVersion=${{ github.ref_name }}
-#        -PpluginRepositoryUrl=https://github.com/Finncu/fdm-Plugin.git \
-#        -PpluginGroup=de.cyan.fca \
-#        -PpluginName=FDM \
+#        -PpluginRepositoryUrl=https://github.com/Finncu/maven-consistency-enforcer.git \
+#        -PpluginGroup=dev.silverhorn.fca \
+#        -PpluginName=MCE \
 #        -PpluginSinceBuild=242 \
 #        -PplatformType=IC \
 #        -PplatformVersion=2025.1.5 \
