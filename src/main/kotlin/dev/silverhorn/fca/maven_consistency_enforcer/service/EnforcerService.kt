@@ -13,17 +13,17 @@ import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 
 /**
- * EnforcerService: Kernlogik für die Durchsetzung von direkten Modul-zu-Modul-Abhängigkeiten.
+ * EnforcerService: Kernlogik fÃ¼r die Durchsetzung von direkten Modul-zu-Modul-AbhÃ¤ngigkeiten.
  *
- * Diese Service-Klasse scannt alle Module eines Projekts und ersetzt JAR-Abhängigkeiten
+ * Diese Service-Klasse scannt alle Module eines Projekts und ersetzt JAR-AbhÃ¤ngigkeiten
  * aus dem lokalen Maven-Repository durch echte Modul-Dependencies, falls das entsprechende
  * Quellmodul im aktuellen Projekt vorhanden ist.
  *
  * **Hauptfunktionen:**
  * - Detection: Identifiziert Library-Entries, die auf .m2/repository verweisen
  * - Mapping: Findet das entsprechende Quellmodul basierend auf Artifact-Koordinaten
- * - Enforcement: Ersetzt gefundene JAR-Abhängigkeiten durch Modul-Dependencies
- * - Reporting: Benachrichtigt über durchgeführte Korrektionen
+ * - Enforcement: Ersetzt gefundene JAR-AbhÃ¤ngigkeiten durch Modul-Dependencies
+ * - Reporting: Benachrichtigt Ã¼ber durchgefÃ¼hrte Korrektionen
  */
 class EnforcerService(private val project: Project) {
 
@@ -31,12 +31,12 @@ class EnforcerService(private val project: Project) {
     private val consistencyChanges = mutableListOf<String>()
 
     /**
-     * Führt einen vollständigen Konsistenz-Check für alle Module durch.
+     * FÃ¼hrt einen vollstÃ¤ndigen Konsistenz-Check fÃ¼r alle Module durch.
      *
      * Diese Methode wird typischerweise nach einem Maven-Reload aufgerufen und scannt
-     * alle Module des Projekts auf problematische Library-Abhängigkeiten.
+     * alle Module des Projekts auf problematische Library-AbhÃ¤ngigkeiten.
      *
-     * @return Anzahl der durchgeführten Korrektionen
+     * @return Anzahl der durchgefÃ¼hrten Korrektionen
      */
     fun runFullConsistencyCheck(): Int {
         consistencyChanges.clear()
@@ -45,10 +45,10 @@ class EnforcerService(private val project: Project) {
 
         logger.info("MCE: Starting full consistency check for ${modules.size} modules")
 
-        for (module in modules) {
-            val changesForModule = enforceModuleConsistency(module)
-            totalChanges += changesForModule
-        }
+//        for (module in modules) {
+//            val changesForModule = enforceModuleConsistency(module)
+//            totalChanges += changesForModule
+//        }
 
         totalChanges += cleanupAttachedJars()
 
@@ -59,10 +59,10 @@ class EnforcerService(private val project: Project) {
     /**
      * Entfernt ungenutzte Maven-Project-Libraries aus der Project-Structure.
      *
-     * Diese Routine bereinigt Library-Einträge unter "Project Structure > Libraries",
+     * Diese Routine bereinigt Library-EintrÃ¤ge unter "Project Structure > Libraries",
      * die aus dem lokalen Maven-Repository stammen und von keinem Modul mehr referenziert werden.
      *
-     * @return Anzahl der gelöschten Project-Libraries
+     * @return Anzahl der gelÃ¶schten Project-Libraries
      */
     private fun cleanupAttachedJars(): Int {
         val referencedLibraryNames = ModuleManager.getInstance(project).modules
@@ -96,14 +96,14 @@ class EnforcerService(private val project: Project) {
     }
 
     /**
-     * Durchsetzt die Konsistenz für ein einzelnes Modul.
+     * Durchsetzt die Konsistenz fÃ¼r ein einzelnes Modul.
      *
-     * Scannt alle OrderEntries des Moduls und ersetzt Library-Einträge, deren
+     * Scannt alle OrderEntries des Moduls und ersetzt Library-EintrÃ¤ge, deren
      * Quellen im lokalen .m2-Repository liegen, durch echte Modul-Dependencies,
      * falls das entsprechende Modul im Projekt existiert.
      *
-     * @param module Das Modul, das auf Konsistenz geprüft werden soll
-     * @return Anzahl der durchgeführten Ersetzungen für dieses Modul
+     * @param module Das Modul, das auf Konsistenz geprÃ¼ft werden soll
+     * @return Anzahl der durchgefÃ¼hrten Ersetzungen fÃ¼r dieses Modul
      */
     private fun enforceModuleConsistency(module: Module): Int {
         var changesCount = 0
@@ -112,7 +112,7 @@ class EnforcerService(private val project: Project) {
             val entriesToRemove = mutableListOf<OrderEntry>()
             val entriesToAdd = mutableListOf<Module>()
 
-            // Iteriere über alle OrderEntries und identifiziere problematische JARs
+            // Iteriere Ã¼ber alle OrderEntries und identifiziere problematische JARs
             for (entry in model.orderEntries) {
                 if (entry is LibraryOrderEntry) {
                     val sourceModule = findSourceModuleForLibrary(entry)
@@ -123,7 +123,7 @@ class EnforcerService(private val project: Project) {
                 }
             }
 
-            // Entferne die problematischen JAR-Einträge
+            // Entferne die problematischen JAR-EintrÃ¤ge
             for (entry in entriesToRemove) {
                 model.removeOrderEntry(entry)
                 changesCount++
@@ -131,7 +131,7 @@ class EnforcerService(private val project: Project) {
                 consistencyChanges.add("Removed JAR library: $libName from module: ${module.name}")
             }
 
-            // Füge die Modul-Abhängigkeiten hinzu
+            // FÃ¼ge die Modul-AbhÃ¤ngigkeiten hinzu
             for (sourceModule in entriesToAdd) {
                 model.addModuleOrderEntry(sourceModule)
                 consistencyChanges.add("Added module dependency: ${sourceModule.name} to module: ${module.name}")
@@ -144,21 +144,21 @@ class EnforcerService(private val project: Project) {
     }
 
     /**
-     * Findet das entsprechende Quellmodul für eine gegebene Library-Abhängigkeit.
+     * Findet das entsprechende Quellmodul fÃ¼r eine gegebene Library-AbhÃ¤ngigkeit.
      *
      * Das Mapping erfolgt durch:
-     * 1. Prüfung, ob die Library-URL im lokalen .m2-Repository liegt
+     * 1. PrÃ¼fung, ob die Library-URL im lokalen .m2-Repository liegt
      * 2. Extraktion der Artifact-Koordinaten (groupId, artifactId, version)
      * 3. Abgleich mit existierenden Modulnamen im Projekt
      *
-     * @param libraryEntry Die zu prüfende Library-Abhängigkeit
+     * @param libraryEntry Die zu prÃ¼fende Library-AbhÃ¤ngigkeit
      * @return Das entsprechende Quellmodul, oder null falls nicht gefunden oder nicht problematisch
      */
     private fun findSourceModuleForLibrary(libraryEntry: LibraryOrderEntry): Module? {
         val library = libraryEntry.library ?: return null
         val urls = library.getUrls(OrderRootType.CLASSES)
 
-        // Prüfe, ob mindestens eine URL im .m2-Repository liegt
+        // PrÃ¼fe, ob mindestens eine URL im .m2-Repository liegt
         val isFromM2 = urls.any { url -> isMavenRepositoryUrl(url) }
 
         if (!isFromM2) {
@@ -184,9 +184,9 @@ class EnforcerService(private val project: Project) {
     }
 
     /**
-     * Prüft, ob eine Klassen-URL auf das lokale Maven-Repository verweist.
+     * PrÃ¼ft, ob eine Klassen-URL auf das lokale Maven-Repository verweist.
      *
-     * @param url Die zu prüfende Library-URL
+     * @param url Die zu prÃ¼fende Library-URL
      * @return true, wenn die URL auf .m2/repository verweist
      */
     private fun isMavenRepositoryUrl(url: String): Boolean {
@@ -197,14 +197,14 @@ class EnforcerService(private val project: Project) {
      * Extrahiert die Artifact-ID aus einem Maven-Library-Namen.
      *
      * Entfernt die Version und Classifier aus dem Library-Namen, um die
-     * Basis-Artifact-ID zu erhalten. Diese wird dann für das Modul-Matching verwendet.
+     * Basis-Artifact-ID zu erhalten. Diese wird dann fÃ¼r das Modul-Matching verwendet.
      *
      * Beispiele:
      * - "my-app-1.0.0" -> "my-app"
      * - "core-service-2.1.0-SNAPSHOT" -> "core-service"
      * - "utils-1.0.0-sources" -> "utils"
      *
-     * @param libraryName Der vollständige Maven-Library-Name
+     * @param libraryName Der vollstÃ¤ndige Maven-Library-Name
      * @return Die extrahierte Artifact-ID
      */
     private fun extractArtifactId(libraryName: String): String {
@@ -215,18 +215,18 @@ class EnforcerService(private val project: Project) {
     }
 
     /**
-     * Gibt eine Zusammenfassung der durchgeführten Änderungen zurück.
+     * Gibt eine Zusammenfassung der durchgefÃ¼hrten Ã„nderungen zurÃ¼ck.
      *
-     * @return Liste der durchgeführten Korrektionen
+     * @return Liste der durchgefÃ¼hrten Korrektionen
      */
     fun getConsistencyChanges(): List<String> = consistencyChanges.toList()
 
     companion object {
         /**
-         * Ruft den EnforcerService für das aktuelle Projekt ab.
+         * Ruft den EnforcerService fÃ¼r das aktuelle Projekt ab.
          *
          * @param project Das IntelliJ-Projekt
-         * @return Die Service-Instanz für das Projekt
+         * @return Die Service-Instanz fÃ¼r das Projekt
          */
         fun getInstance(project: Project): EnforcerService {
             return project.getService(EnforcerService::class.java)
