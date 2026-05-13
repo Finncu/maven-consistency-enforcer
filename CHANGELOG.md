@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [ ] Enforcement of using module source instead of artifacts or libraries
+  - [ ] Ability to specify which modules to enforce
+  - [ ] all modules toggle
+- [ ] Auto reimport on project startup to prevent using false local maven repository
+
+### Features
+
+- [ ] **ModuleEnforcement**
+- [ ] **ProjectStartupFix**
+
 ## [1.0.0] - 2026-05-08
 
 ### Added
