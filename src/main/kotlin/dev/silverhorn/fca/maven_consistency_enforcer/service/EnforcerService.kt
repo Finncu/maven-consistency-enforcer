@@ -1,17 +1,18 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.service
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.util.containers.stream
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.LinkedList
 
 /**
@@ -31,6 +32,8 @@ class EnforcerService(private val project: Project) {
 
     private val logger = Logger.getInstance(EnforcerService::class.java)
     private val consistencyChanges = mutableListOf<String>()
+    private val moduleManager: ModuleManager by lazy { project.service() }
+    private val mavenProjectsManager: MavenProjectsManager by lazy { project.service() }
 
     /**
      * Führt einen vollständigen Konsistenz-Check für alle Module durch.
@@ -42,15 +45,11 @@ class EnforcerService(private val project: Project) {
      */
     fun runFullConsistencyCheck(): Int {
         consistencyChanges.clear()
-        val modules = ModuleManager.getInstance(project).modules
         var totalChanges = 0
 
-        logger.info("MCE: Starting full consistency check for ${modules.size} modules")
+        logger.info("MCE: Starting full consistency check for ${moduleManager.modules.size} modules")
 
-        for (module in modules) {
-            val changesForModule = enforceModuleConsistency(module)
-            totalChanges += changesForModule
-        }
+        totalChanges += enforceModulesConsistency()
 
         totalChanges += cleanupAttachedJars()
 
@@ -67,14 +66,6 @@ class EnforcerService(private val project: Project) {
      * @return Anzahl der gelöschten Project-Libraries
      */
     private fun cleanupAttachedJars(): Int {
-        val referencedLibraryNames = ModuleManager.getInstance(project).modules
-            .flatMap { module ->
-                ModuleRootManager.getInstance(module).orderEntries
-                    .filterIsInstance<LibraryOrderEntry>()
-                    .mapNotNull { it.libraryName }
-            }
-            .toSet()
-
         val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
         var removedCount = 0
 
@@ -90,11 +81,35 @@ class EnforcerService(private val project: Project) {
                     logger.debug("MCE: Removed unused project library " + library?.name)
                 }
             }
-
             tableModel.commit()
         }
 
         return removedCount
+    }
+
+    private fun enforceModulesConsistency(): Int {
+        var changesCount = 0
+        val moduleMap = moduleManager.modules.mapNotNull { module ->
+            val mavenProject = mavenProjectsManager.findProject(module) ?: return@mapNotNull null
+            val artifactId = mavenProject.mavenId.artifactId ?: return@mapNotNull null
+            artifactId to module
+        }.toMap()
+        for (module in moduleManager.modules)
+            ModuleRootModificationUtil.updateModel(module) { model ->
+                val modules = ArrayList<Module>()
+                val entries = ArrayList<LibraryOrderEntry>()
+                model.orderEntries.forEach { entry ->
+                        if (entry is LibraryOrderEntry)
+                            entry.libraryName?.let { moduleMap[this.extractArtifactId(it)] }?.let {
+                                modules.add(it)
+                                entries.add(entry)
+                                changesCount++
+                            }
+                    }
+                entries.forEach(model::removeOrderEntry)
+                modules.forEach(model::addModuleOrderEntry)
+            }
+        return changesCount
     }
 
     /**
@@ -173,7 +188,6 @@ class EnforcerService(private val project: Project) {
 
         // Extrahiere Artifact-Informationen aus der JAR-URL oder dem Library-Namen
         val libraryName = libraryEntry.libraryName ?: return null
-        val moduleManager = ModuleManager.getInstance(project)
 
         // Versuche, das Modul anhand des Library-Namens zu finden
         // Typisches Maven-Namensschema: "artifactId" oder "artifactId-version"
@@ -214,30 +228,11 @@ class EnforcerService(private val project: Project) {
      * @return Die extrahierte Artifact-ID
      */
     private fun extractArtifactId(libraryName: String): String? {
-        val gavPattern = Regex("([^:]*): ([^:]*):([^:]*):([^:]*)")
-        val gavRes : String? = gavPattern.find(libraryName)?.groupValues[3]
+        val gavPattern = Regex("([^ :]*):([^ :]*):([^ :]*)")
+        val gavRes: String? = gavPattern.find(libraryName)?.groupValues[3]
         if (gavRes == null)
-            logger.warn("$libraryName doesnt match Gav shit")
+            logger.warn("$libraryName doesnt match GAV-C")
         return gavRes
-    }
-
-    /**
-     * Gibt eine Zusammenfassung der durchgeführten Änderungen zurück.
-     *
-     * @return Liste der durchgeführten Korrektionen
-     */
-    fun getConsistencyChanges(): List<String> = consistencyChanges.toList()
-
-    companion object {
-        /**
-         * Ruft den EnforcerService für das aktuelle Projekt ab.
-         *
-         * @param project Das IntelliJ-Projekt
-         * @return Die Service-Instanz für das Projekt
-         */
-        fun getInstance(project: Project): EnforcerService {
-            return project.getService(EnforcerService::class.java)
-        }
     }
 }
 
