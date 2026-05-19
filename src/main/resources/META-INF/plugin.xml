@@ -31,6 +31,12 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
     <depends>org.jetbrains.idea.maven</depends>
 <!---->
     <extensions defaultExtensionNs="com.intellij">
+        <projectConfigurable
+            instance="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable"
+            id="dev.silverhorn.fca.maven_consistency_enforcer.settings"
+            displayName="Maven Consistency Enforcer"
+            nonDefaultProject="true"
+            groupId="tools"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
 
