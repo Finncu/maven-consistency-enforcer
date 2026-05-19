@@ -1,5 +1,6 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.listeners
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -32,7 +33,9 @@ import org.jetbrains.idea.maven.project.MavenProject
 class MceMavenReloadListener(private val project: Project) : MavenImportListener {
 
     private val logger = Logger.getInstance(MceMavenReloadListener::class.java)
-
+    private val enforcerService :EnforcerService by lazy { project.service() }
+    private val dumbService : DumbService by lazy { project.service() }
+    private val progressManager : ProgressManager by lazy { ProgressManager.getInstance() }
     /**
      * Wird aufgerufen, wenn Maven das Projekt-Modell aktualisiert hat.
      *
@@ -72,18 +75,17 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
      * @param project Das aktuelle Projekt
      */
     private fun startEnforcementTask(project: Project) {
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "MCE: Enforcing Module Consistency", false) {
+        progressManager.run(object : Task.Backgroundable(project, "MCE: Enforcing Module Consistency", false) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
                 indicator.text = "MCE: Waiting for IDE to be ready..."
                 indicator.isIndeterminate = true
 
                 // Warte, bis die Indizierung fertig ist
-                DumbService.getInstance(project).runWhenSmart {
+                dumbService.runWhenSmart {
                     try {
                         indicator.text = "MCE: Scanning modules for stale dependencies..."
 
                         // Führe den vollständigen Konsistenz-Check durch
-                        val enforcerService = EnforcerService.getInstance(project)
                         val changeCount = enforcerService.runFullConsistencyCheck()
 
                         // Benachrichtige über die Ergebnisse
