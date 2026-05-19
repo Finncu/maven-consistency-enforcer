@@ -6,11 +6,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import java.util.LinkedList
 
 /**
  * EnforcerService: Kernlogik für die Durchsetzung von direkten Modul-zu-Modul-Abhängigkeiten.
@@ -45,10 +47,10 @@ class EnforcerService(private val project: Project) {
 
         logger.info("MCE: Starting full consistency check for ${modules.size} modules")
 
-//        for (module in modules) {
-//            val changesForModule = enforceModuleConsistency(module)
-//            totalChanges += changesForModule
-//        }
+        for (module in modules) {
+            val changesForModule = enforceModuleConsistency(module)
+            totalChanges += changesForModule
+        }
 
         totalChanges += cleanupAttachedJars()
 
@@ -128,12 +130,14 @@ class EnforcerService(private val project: Project) {
                 model.removeOrderEntry(entry)
                 changesCount++
                 val libName = if (entry is LibraryOrderEntry) entry.libraryName else "unknown"
+                logger.debug("Removed JAR library: $libName from module: ${module.name}")
                 consistencyChanges.add("Removed JAR library: $libName from module: ${module.name}")
             }
 
             // Füge die Modul-Abhängigkeiten hinzu
             for (sourceModule in entriesToAdd) {
                 model.addModuleOrderEntry(sourceModule)
+                logger.debug("Added module dependency: ${sourceModule.name} to module: ${module.name}")
                 consistencyChanges.add("Added module dependency: ${sourceModule.name} to module: ${module.name}")
             }
 
@@ -148,7 +152,7 @@ class EnforcerService(private val project: Project) {
      *
      * Das Mapping erfolgt durch:
      * 1. Prüfung, ob die Library-URL im lokalen .m2-Repository liegt
-     * 2. Extraktion der Artifact-Koordinaten (groupId, artifactId, version)
+     * 2. Extraktion der Artifact-Koordinaten (groupId,artifactId, version)
      * 3. Abgleich mit existierenden Modulnamen im Projekt
      *
      * @param libraryEntry Die zu prüfende Library-Abhängigkeit
@@ -156,7 +160,9 @@ class EnforcerService(private val project: Project) {
      */
     private fun findSourceModuleForLibrary(libraryEntry: LibraryOrderEntry): Module? {
         val library = libraryEntry.library ?: return null
-        val urls = library.getUrls(OrderRootType.CLASSES)
+        val urls = LinkedList<String>()
+        urls.addAll(library.getUrls(OrderRootType.CLASSES))
+        urls.addAll(library.getUrls(OrderRootType.SOURCES))
 
         // Prüfe, ob mindestens eine URL im .m2-Repository liegt
         val isFromM2 = urls.any { url -> isMavenRepositoryUrl(url) }
@@ -190,7 +196,7 @@ class EnforcerService(private val project: Project) {
      * @return true, wenn die URL auf .m2/repository verweist
      */
     private fun isMavenRepositoryUrl(url: String): Boolean {
-        return url.contains(".m2/repository") || url.contains(".m2\\repository")
+        return url.contains("mavenrepository") || url.contains(".m2/repository") || url.contains(".m2\\repository")
     }
 
     /**
@@ -207,11 +213,12 @@ class EnforcerService(private val project: Project) {
      * @param libraryName Der vollständige Maven-Library-Name
      * @return Die extrahierte Artifact-ID
      */
-    private fun extractArtifactId(libraryName: String): String {
-        // Entferne die Version (z.B. -1.0.0, -2.1.0-SNAPSHOT)
-        // Regex: Alles ab einem "-" gefolgt von einer Zahl
-        val versionPattern = Regex("""-(\d+[\.\d]*(?:-[A-Z]+)?(?:-\w+)?)$""")
-        return versionPattern.replace(libraryName, "").trim()
+    private fun extractArtifactId(libraryName: String): String? {
+        val gavPattern = Regex("([^:]*): ([^:]*):([^:]*):([^:]*)")
+        val gavRes : String? = gavPattern.find(libraryName)?.groupValues[3]
+        if (gavRes == null)
+            logger.warn("$libraryName doesnt match Gav shit")
+        return gavRes
     }
 
     /**
