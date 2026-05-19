@@ -37,6 +37,7 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
             displayName="Maven Consistency Enforcer"
             nonDefaultProject="true"
             groupId="tools"/>
+        <search.optionContributor implementation="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSearchableOptionContributor"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
 
@@ -45,6 +46,22 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
 <!--            <add-to-group group-id="ToolsMenu" anchor="last"/>-->
 <!--        </action>-->
 <!--    </actions>-->
+
+    <actions>
+        <action id="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceTogglePluginAction"
+                class="dev.silverhorn.fca.maven_consistency_enforcer.settings.actions.MceTogglePluginAction"
+                text="Maven Consistency Enforcer: Enable Plugin"
+                description="Toggle the automatic Maven consistency enforcements on or off">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceToggleForceModulesAction"
+                class="dev.silverhorn.fca.maven_consistency_enforcer.settings.actions.MceToggleForceModulesAction"
+                text="Maven Consistency Enforcer: Force Local Module Usage"
+                description="Toggle enforcement of local module dependencies over Maven artifacts">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
 
     <projectListeners>
         <listener class="dev.silverhorn.fca.maven_consistency_enforcer.listeners.MceMavenReloadListener" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>

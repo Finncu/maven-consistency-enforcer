@@ -6,20 +6,17 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
-import dev.silverhorn.fca.maven_consistency_enforcer.settings.LogLevel
 import java.awt.Dimension
 import javax.swing.JComponent
 
 class EnforcerSettingsConfigurable(private val project: Project) : SearchableConfigurable {
 
-    private val settingsService :EnforcerSettingsStateService by lazy { project.service() }
-    private val moduleManager :ModuleManager by lazy { project.service() }
+    private val settingsService: EnforcerSettingsStateService by lazy { project.service() }
+    private val moduleManager: ModuleManager by lazy { project.service() }
     private var uiPanel: com.intellij.openapi.ui.DialogPanel? = null
 
-// Die interaktive Checkbox-Liste für die Module
+    // Die interaktive Checkbox-Liste für die Module
     private val checkBoxList = CheckBoxList<String>()
 
     override fun getId(): String = "dev.silverhorn.fca.maven_consistency_enforcer.settings"
@@ -36,26 +33,33 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
         // 2. Die Liste befüllen und den Status (ausgewählt/nicht ausgewählt) setzen
         checkBoxList.clear()
         allModules.forEach { moduleName ->
-            // Ein Häkchen bedeutet in unserem UI: "Dieses Modul vom Enforcer ausschließen"
             val isExcluded = state.excludedModules.contains(moduleName)
             checkBoxList.addItem(moduleName, moduleName, isExcluded)
         }
 
         // 3. UI mittels Kotlin UI DSL v2 aufbauen
         uiPanel = panel {
+            // Wir weisen der Haupt-Checkbox eine Variable zu, um andere Elemente daran zu binden
+            lateinit var mainEnforcerCb: Cell<com.intellij.ui.components.JBCheckBox>
+
             row {
-                checkBox("Enable Maven Consistency Enforcer")
+                mainEnforcerCb = checkBox("Enable Maven Consistency Enforcer")
                     .bindSelected(state::isEnabled)
-                checkBox("Enable Enforcement of Local Module Usage")
-                .bindSelected(state::forceLocalModules)
             }
 
+            row {
+                checkBox("Enable Enforcement of Local Module Usage")
+                    .bindSelected(state::forceLocalModules)
+                    // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
+                    .enabledIf(mainEnforcerCb.selected)
+            }
+
+            // Die gesamte Gruppe deaktiviert sich visuell, wenn das Haupt-Plugin ausgeschaltet ist
             group("Exclusion Rules") {
                 row {
                     label("Select modules to exclude from enforcing:")
                 }
                 row {
-                    // Wir packen die CheckBoxList in einen scrollbaren Container mit fester Mindestgröße
                     val scrollPane = JBScrollPane(checkBoxList).apply {
                         preferredSize = Dimension(400, 200)
                     }
@@ -63,7 +67,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                         .align(AlignX.FILL)
                         .comment("Checked modules will not be modified by the consistency enforcer.")
                 }
-            }
+            }.enabledIf(mainEnforcerCb.selected)
 
             group("Logging") {
                 row("Log Level:") {
@@ -82,24 +86,19 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
     override fun isModified(): Boolean {
         if (uiPanel?.isModified() == true) return true
 
-        // Prüfen, ob sich die Auswahl in der Checkbox-Liste von den gespeicherten Daten unterscheidet
         val currentExclusions = getSelectedModulesFromUI()
         val savedExclusions = settingsService.state.excludedModules
         return currentExclusions.toSet() != savedExclusions.toSet()
     }
 
     override fun apply() {
-        // Standard-Bindings anwenden (z.B. isEnabled und LogLevel)
         uiPanel?.apply()
-
-        // Die ausgewählten Module aus der UI-Liste auslesen und im State speichern
         settingsService.state.excludedModules = getSelectedModulesFromUI()
     }
 
     override fun reset() {
         uiPanel?.reset()
 
-        // UI-Liste auf den gespeicherten Stand zurücksetzen
         val state = settingsService.state
         for (i in 0 until checkBoxList.itemsCount) {
             val moduleName = checkBoxList.getItemAt(i) ?: continue
@@ -111,9 +110,6 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
         uiPanel = null
     }
 
-    /**
-     * Hilfsfunktion, die alle vom Benutzer angehakten Modulnamen aus der Liste extrahiert.
-     */
     private fun getSelectedModulesFromUI(): List<String> {
         val selected = mutableListOf<String>()
         for (i in 0 until checkBoxList.itemsCount) {
