@@ -37,6 +37,7 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
             displayName="Maven Consistency Enforcer"
             nonDefaultProject="true"
             groupId="tools"/>
+        <statusBarWidgetFactory implementation="dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidgetFactory"/>
         <search.optionContributor implementation="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSearchableOptionContributor"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
