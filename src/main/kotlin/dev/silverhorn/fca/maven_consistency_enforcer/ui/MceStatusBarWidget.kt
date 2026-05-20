@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -18,6 +19,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.Consumer
+import com.intellij.vcsUtil.showAbove
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
@@ -29,6 +31,8 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 class MceStatusBarWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
+
+    private val logger = Logger.getInstance(this::class.java)
 
     companion object {
         const val ID = "MceStatusBarWidget"
@@ -46,9 +50,15 @@ class MceStatusBarWidget(private val project: Project) : StatusBarWidget, Status
     }
 
     override fun getClickConsumer(): Consumer<MouseEvent> = Consumer { event ->
+    try {
         val popup = createStatusPopup()
-        popup.showInCenterOf(event.component)
+        // WICHTIG: showAbove() ist der korrekte Weg für Statusleisten-Widgets!
+        popup.showAbove(event.component)
+    } catch (e: Exception) {
+        // Falls z.B. settingsService.state.isEnabled nicht existiert, sehen wir es jetzt!
+        Logger.getInstance(MceStatusBarWidget::class.java).error("MCE: Fehler beim Öffnen des Popups", e)
     }
+}
 
     override fun getPopupStep() = null
     override fun install(statusBar: StatusBar) {}

@@ -29,24 +29,27 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.idea.maven</depends>
-<!---->
+    <!---->
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable
-            instance="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable"
-            id="dev.silverhorn.fca.maven_consistency_enforcer.settings"
-            displayName="Maven Consistency Enforcer"
-            nonDefaultProject="true"
-            groupId="tools"/>
-        <statusBarWidgetFactory implementation="dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidgetFactory"/>
-        <search.optionContributor implementation="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSearchableOptionContributor"/>
+                instance="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable"
+                id="dev.silverhorn.fca.maven_consistency_enforcer.settings"
+                displayName="Maven Consistency Enforcer"
+                nonDefaultProject="true"
+                groupId="tools"/>
+        <statusBarWidgetFactory
+                implementation="dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidgetFactory"
+                id="MceStatusBarWidget"/>
+        <search.optionContributor
+                implementation="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSearchableOptionContributor"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
 
-<!--    <actions>-->
-<!--        <action id="MCE.PurgeArtifacts" class="dev.silverhorn.fca.maven_consistency_enforcer.actions.PurgeArtifactAction" text="MCE: Purge Stale Artifacts" description="Delete target/build directories and enforce module consistency">-->
-<!--            <add-to-group group-id="ToolsMenu" anchor="last"/>-->
-<!--        </action>-->
-<!--    </actions>-->
+    <!--    <actions>-->
+    <!--        <action id="MCE.PurgeArtifacts" class="dev.silverhorn.fca.maven_consistency_enforcer.actions.PurgeArtifactAction" text="MCE: Purge Stale Artifacts" description="Delete target/build directories and enforce module consistency">-->
+    <!--            <add-to-group group-id="ToolsMenu" anchor="last"/>-->
+    <!--        </action>-->
+    <!--    </actions>-->
 
     <actions>
         <action id="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceTogglePluginAction"
@@ -65,6 +68,7 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
     </actions>
 
     <projectListeners>
-        <listener class="dev.silverhorn.fca.maven_consistency_enforcer.listeners.MceMavenReloadListener" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+        <listener class="dev.silverhorn.fca.maven_consistency_enforcer.listeners.MceMavenReloadListener"
+                  topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
     </projectListeners>
 </idea-plugin>
