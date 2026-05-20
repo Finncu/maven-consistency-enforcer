@@ -155,9 +155,9 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
         metricsPanel.add(JBLabel("ignored modules:"))
         metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
         metricsPanel.add(JBLabel("removed attached jars:"))
-        metricsPanel.add(JBLabel("${status.enforcementsCount.get()}"))
+        metricsPanel.add(JBLabel("${status.removedAttachedJars.get()}"))
         metricsPanel.add(JBLabel("enforced module usage:"))// flashcast - sollte noch überarbeitet werden
-        metricsPanel.add(JBLabel(status.removedAttachedJars.get().toString()))
+        metricsPanel.add(JBLabel(status.enforcementsCount.get().toString()))
         metricsPanel.add(JBLabel("processed dependencies:"))
         metricsPanel.add(JBLabel("${status.processedLibraries}"))
         metricsPanel.add(JBLabel("last run:"))
