@@ -35,3 +35,9 @@ jobs:
 
       - name: Build with Gradle Wrapper
         run: ./gradlew buildPlugin
+
+      - name: Publish Snapshot to GitHub Packages
+        run: |
+          ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
