@@ -74,7 +74,7 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
         if (project.isDisposed) return
         try {
             val service = project.getService(EnforcerService::class.java)
-            val total = service.currentStatus.cleanedDependencies.get()
+            val total = service.currentStatus.removedAttachedJars.get()
             label.text = if (total > 0) "MCE | $total" else "MCE active"
             label.repaint()
         } catch (e: Exception) {
@@ -150,16 +150,16 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
                 settingsService?.state?.forceLocalModules = this.isSelected
             }
         })
-        metricsPanel.add(JBLabel("enforced module usage:"))// flashcast - sollte noch überarbeitet werden
-        metricsPanel.add(JBLabel(status.cleanedDependencies.get().toString()))
         metricsPanel.add(JBLabel("checked modules:"))
         metricsPanel.add(JBLabel(status.checkedModules.get().toString()))
         metricsPanel.add(JBLabel("ignored modules:"))
         metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
         metricsPanel.add(JBLabel("removed attached jars:"))
         metricsPanel.add(JBLabel("${status.enforcementsCount.get()}"))
+        metricsPanel.add(JBLabel("enforced module usage:"))// flashcast - sollte noch überarbeitet werden
+        metricsPanel.add(JBLabel(status.removedAttachedJars.get().toString()))
         metricsPanel.add(JBLabel("processed dependencies:"))
-        metricsPanel.add(JBLabel("${status.totalDependenciesToProcess}"))
+        metricsPanel.add(JBLabel("${status.processedLibraries}"))
         metricsPanel.add(JBLabel("last run:"))
         metricsPanel.add(JBLabel("${status.lastUpdated} (${status.durationMs} ms)"))
 

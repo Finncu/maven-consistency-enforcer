@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.jetbrains.rhizomedb.requireChangeScope
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
@@ -33,14 +34,14 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
                 try {
                     indicator.text = "MCE: Restructuring module dependencies..."
                     indicator.isIndeterminate = true
-                    var changeCount = 0
 
                     // Übergabe der Einstellungen an den Service
                     ApplicationManager.getApplication().invokeAndWait {
-                        changeCount += if (settings.state.forceLocalModules)
+                        if (settings.state.forceLocalModules)
                             enforcerService.runFullConsistencyCheck()
                         else enforcerService.cleanupAttachedJars()
                     }
+                    var changeCount = enforcerService.currentStatus.enforcementsCount.get() + enforcerService.currentStatus.removedAttachedJars.get()
 
                     if (changeCount > 0) {
                         MceNotification.showInfo(project, "MCE: Fixed $changeCount dependencies")
