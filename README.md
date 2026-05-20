@@ -11,7 +11,8 @@ MCE solves the frustrating problem of stale JAR artifacts preventing your code c
 
 **What it does:**
 - Automatically removes attached jars
-- Ensures what you see in your editor matches exactly what runs in your JVM
+- replaces library entries with module dependencies
+  -> if you have a module with code, use it
 
 **Default behavior:**
 - Triggers automatically after Maven > Reload Project
