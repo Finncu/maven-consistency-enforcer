@@ -57,7 +57,7 @@ class EnforcerService(private val project: Project) {
                 if (library?.name?.contains("ATTACHED-JAR") ?: false) {
                     tableModel.removeLibrary(library)
                     currentStatus.removedAttachedJars.incrementAndGet()
-                    logger.debug("MCE: Removed unused project library " + library?.name)
+                    logger.debug("MCE: Removed unused project library " + library.name)
                 }
             }
             tableModel.commit()
