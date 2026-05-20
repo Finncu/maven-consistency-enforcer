@@ -2,7 +2,6 @@ package dev.silverhorn.fca.maven_consistency_enforcer.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -10,20 +9,14 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.ClickListener
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
-import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import java.awt.BorderLayout
 import java.awt.Cursor
-import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.GridLayout
 import java.awt.event.MouseEvent
