@@ -77,25 +77,23 @@ class EnforcerService(private val project: Project) {
             val artifactId = mavenProject.mavenId.artifactId ?: return@mapNotNull null
             artifactId to module
         }.toMap()
-        ApplicationManager.getApplication().invokeAndWait {
-            WriteAction.run<RuntimeException> {
-                for (module in moduleManager.modules) {
-                    if (settings.state.excludedModules.contains(module.name)) continue
-                    val model = ModuleRootManager.getInstance(module).modifiableModel
-                    val replacements = model.orderEntries.filterIsInstance<LibraryOrderEntry>().mapNotNull { entry ->
-                        entry.libraryName?.let { moduleMap[this.extractArtifactId(it)] }?.let {
-                            entry to it
-                        }
+        WriteAction.run<RuntimeException> {
+            for (module in moduleManager.modules) {
+                if (settings.state.excludedModules.contains(module.name)) continue
+                val model = ModuleRootManager.getInstance(module).modifiableModel
+                val replacements = model.orderEntries.filterIsInstance<LibraryOrderEntry>().mapNotNull { entry ->
+                    entry.libraryName?.let { moduleMap[this.extractArtifactId(it)] }?.let {
+                        entry to it
                     }
-                    for ((libEntry, module) in replacements) {
-                        model.removeOrderEntry(libEntry)
-                        model.addModuleOrderEntry(module)
-                        changesCount.incrementAndGet()
-                    }
-                    if (replacements.isNotEmpty())
-                        model.commit()
-                    else model.dispose()
                 }
+                for ((libEntry, module) in replacements) {
+                    model.removeOrderEntry(libEntry)
+                    model.addModuleOrderEntry(module)
+                    changesCount.incrementAndGet()
+                }
+                if (replacements.isNotEmpty())
+                    model.commit()
+                else model.dispose()
             }
         }
         return changesCount.get()

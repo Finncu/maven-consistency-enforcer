@@ -1,5 +1,6 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.listeners
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
@@ -35,16 +36,19 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
                     var changeCount = 0
 
                     // Übergabe der Einstellungen an den Service
-                    changeCount += if (settings.state.forceLocalModules)
-                        enforcerService.runFullConsistencyCheck()
-                    else enforcerService.cleanupAttachedJars()
+                    ApplicationManager.getApplication().invokeAndWait {
+                        changeCount += if (settings.state.forceLocalModules)
+                            enforcerService.runFullConsistencyCheck()
+                        else enforcerService.cleanupAttachedJars()
+                    }
 
                     if (changeCount > 0) {
                         MceNotification.showInfo(project, "MCE: Fixed $changeCount dependencies")
                     }
                 } catch (e: Exception) {
-                    logger.error("MCE: Error during consistency enforcement", e)
+                    logger.error("MCE: Error during consistency enforcement")
                     MceNotification.showError(project, "MCE: Error during enforcement - ${e.message}")
+                    throw e
                 }
             }
         })
