@@ -1,185 +1,183 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.ui.ClickListener
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.Consumer
+import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import java.awt.BorderLayout
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.GridLayout
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-class MceStatusBarWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
-
-    private val logger = Logger.getInstance(this::class.java)
+class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, StatusBarWidget {
 
     companion object {
         const val ID = "MceStatusBarWidget"
     }
 
+    // Wir bauen das UI-Element komplett selbst auf
+    private val label = JBLabel("MCE Aktiv").apply {
+////        icon = AllIcons.General.RunWithCoverage
+////        icon = AllIcons.General.Beta
+////        icon = AllIcons.Ide.UpDown
+////        icon = AllIcons.Ide.SharedScope +++
+////        icon = AllIcons.Actions.Attach
+////        icon = AllIcons.Actions.ForceRefresh +-
+////        icon = AllIcons.Actions.Collapseall +
+////        icon = AllIcons.Actions.DependencyAnalyzer +++
+////        icon = AllIcons.Actions.Uninstall +++
+////        icon = AllIcons.Actions.Install ++
+////        icon = AllIcons.Actions.Lightning ++++
+//        icon = AllIcons.Modules.UnloadedModule
+////        icon = AllIcons.Modules.SourceRoot +++++++++
+//        icon = AllIcons.Scope.Production
+////        icon = AllIcons.FileTypes.Manifest -
+////        icon = AllIcons.Gutter.OverridenMethod +++
+        icon = AllIcons.Gutter.WriteAccess // +++++++
+        border = JBUI.Borders.empty(0, 4)
+
+        // Ein nativer, unverwüstlicher Swing-Klick-Listener
+        object : ClickListener() {
+            override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+                try {
+                    val popup = createStatusPopup()
+                    // Zeigt das Popup exakt an der geklickten Maus-Koordinate (100% verlässlich)
+//                    popup.show(RelativePoint(event))
+                    popup.showAbove(this@MceStatusBarWidget.component)
+                } catch (e: Throwable) {
+                    Messages.showErrorDialog(
+                        project,
+                        "Fehler beim Öffnen des Status-Popups:\n${e.message}",
+                        "MCE Widget Crash"
+                    )
+                }
+                return true
+            }
+        }.installOn(this)
+    }
+
+    // Wird manuell aufgerufen, um den Text zu aktualisieren
+    fun updateLabelText() {
+        if (project.isDisposed) return
+        try {
+            val service = project.getService(EnforcerService::class.java)
+            val total = service.currentStatus.cleanedDependencies.get()
+            label.text = if (total > 0) "MCE | $total" else "MCE active"
+            label.repaint()
+        } catch (e: Exception) {
+            label.text = "MCE Error"
+        }
+    }
+
     override fun ID(): String = ID
-    override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
-    override fun getTooltipText(): String = "Maven Consistency Enforcer Status anzeigen"
-    override fun getIcon(): Icon = IconLoader.getIcon("/META-INF/pluginIcon.svg", javaClass)
 
-    override fun getSelectedValue(): String {
-        val status = project.getService(EnforcerService::class.java).currentStatus
-        val total = status.cleanedDependencies.get()
-        return if (total > 0) "$total Bereinigungen" else "MCE Aktiv"
+    override fun getComponent(): JComponent {
+        updateLabelText()
+        return label
     }
 
-    override fun getClickConsumer(): Consumer<MouseEvent> = Consumer { event ->
-    try {
-        val popup = createStatusPopup()
-        // WICHTIG: showAbove() ist der korrekte Weg für Statusleisten-Widgets!
-        popup.showAbove(event.component)
-    } catch (e: Exception) {
-        // Falls z.B. settingsService.state.isEnabled nicht existiert, sehen wir es jetzt!
-        Logger.getInstance(MceStatusBarWidget::class.java).error("MCE: Fehler beim Öffnen des Popups", e)
+    override fun install(statusBar: StatusBar) {
+        updateLabelText()
     }
-}
-
-    override fun getPopupStep() = null
-    override fun install(statusBar: StatusBar) {}
-    override fun dispose() {}
 
     private fun createStatusPopup(): com.intellij.openapi.ui.popup.JBPopup {
         val service = project.getService(EnforcerService::class.java)
-        val settingsService = project.getService(EnforcerSettingsStateService::class.java)
         val status = service.currentStatus
 
-        // Main Panel
+        val settingsService = project.getService(EnforcerSettingsStateService::class.java)
+        val isEnabled = settingsService?.state?.isEnabled ?: true
+        val forceLocalModules = settingsService?.state?.forceLocalModules ?: true
+
         val mainPanel = JPanel(BorderLayout(0, 10)).apply {
             border = BorderFactory.createEmptyBorder(12, 12, 12, 12)
         }
 
-        // Header Panel mit Controls (Titel, Rerun, Settings)
         val headerPanel = JPanel(BorderLayout())
-        val titleLabel = JBLabel("Maven Consistency Enforcer").apply {
+        headerPanel.add(JBLabel("Maven Consistency Enforcer").apply {
             font = font.deriveFont(java.awt.Font.BOLD, font.size + 2f)
-        }
-        headerPanel.add(titleLabel, BorderLayout.WEST)
+        }, BorderLayout.WEST)
 
-        // Button Group (Rerun & Settings)
         val toolbarPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 5, 0))
-        
-        // Rerun-Button (Nutzt IntelliJ AllIcons)
         val rerunButton = JButton(AllIcons.Actions.Refresh).apply {
-            toolTipText = "Konsistenzprüfung manuell starten"
+            toolTipText = "trigger manually"
             isBorderPainted = false
             isContentAreaFilled = false
             addActionListener {
-                // Führt den Check im Hintergrund-Thread aus, damit die IDE nicht freezt
                 ApplicationManager.getApplication().executeOnPooledThread {
                     service.runFullConsistencyCheck()
                 }
             }
+            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         }
-        
-        // Settings Zahnrad-Button
-        val settingsButton = JButton(AllIcons.General.GearPlain).apply {
-            toolTipText = "MCE Einstellungen öffnen"
-            isBorderPainted = false
-            isContentAreaFilled = false
-            addActionListener {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, EnforcerSettingsConfigurable::class.java)
-            }
-        }
-        
+//        val settingsButton = JButton(AllIcons.General.GearPlain).apply {
+//            toolTipText = "Einstellungen öffnen"
+//            isBorderPainted = false
+//            isContentAreaFilled = false
+//            addActionListener {
+//                ShowSettingsUtil.getInstance().showSettingsDialog(project, EnforcerSettingsConfigurable::class.java)
+//            }
+//        }
         toolbarPanel.add(rerunButton)
-        toolbarPanel.add(settingsButton)
+//        toolbarPanel.add(settingsButton)
         headerPanel.add(toolbarPanel, BorderLayout.EAST)
         mainPanel.add(headerPanel, BorderLayout.NORTH)
 
-        // Content Panel (Progress & Metriken)
         val contentPanel = JPanel(BorderLayout(0, 8))
 
-        // Ladebalken (Abgesichert gegen 0 Divisionen)
-        val maxProgress = status.totalDependenciesToProcess.coerceAtLeast(1)
-        val currentProgress = status.cleanedDependencies.get().coerceAtMost(maxProgress)
-        val progressBar = JProgressBar(0, maxProgress).apply {
-            value = currentProgress
-            isStringPainted = true
-            string = "${status.cleanedDependencies.get()} Elemente verarbeitet"
-        }
-        contentPanel.add(progressBar, BorderLayout.NORTH)
-
-        // Grid für die Metriken
         val metricsPanel = JPanel(GridLayout(0, 2, 10, 4))
-        
-        // Globaler Quick Toggle
-        metricsPanel.add(JBLabel("Plugin-Status:"))
-        val toggleEnable = JBCheckBox("Aktiv", settingsService.state.isEnabled).apply {
+        metricsPanel.add(JBLabel("plugin:"))
+        metricsPanel.add(JBCheckBox("active", isEnabled).apply {
             addActionListener {
-                settingsService.state.isEnabled = this.isSelected
+                settingsService?.state?.isEnabled = this.isSelected
             }
-        }
-        metricsPanel.add(toggleEnable)
-
-        metricsPanel.add(JBLabel("Überprüfte Module:"))
+        })
+        metricsPanel.add(JBLabel("enforce module usage:"))
+        metricsPanel.add(JBCheckBox("active", forceLocalModules).apply {
+            addActionListener {
+                settingsService?.state?.forceLocalModules = this.isSelected
+            }
+        })
+        metricsPanel.add(JBLabel("enforced module usage:"))// flashcast - sollte noch überarbeitet werden
+        metricsPanel.add(JBLabel(status.cleanedDependencies.get().toString()))
+        metricsPanel.add(JBLabel("checked modules:"))
         metricsPanel.add(JBLabel(status.checkedModules.get().toString()))
-
-        metricsPanel.add(JBLabel("Ignorierte Module:"))
+        metricsPanel.add(JBLabel("ignored modules:"))
         metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
-
-        metricsPanel.add(JBLabel("Durchgeführte Enforcements:"))
-        metricsPanel.add(JBLabel("${status.enforcementsCount.get()} Ersetzungen"))
-
-        metricsPanel.add(JBLabel("Letzter Durchlauf:"))
+        metricsPanel.add(JBLabel("removed attached jars:"))
+        metricsPanel.add(JBLabel("${status.enforcementsCount.get()}"))
+        metricsPanel.add(JBLabel("processed dependencies:"))
+        metricsPanel.add(JBLabel("${status.totalDependenciesToProcess}"))
+        metricsPanel.add(JBLabel("last run:"))
         metricsPanel.add(JBLabel("${status.lastUpdated} (${status.durationMs} ms)"))
 
         contentPanel.add(metricsPanel, BorderLayout.CENTER)
         mainPanel.add(contentPanel, BorderLayout.CENTER)
 
-        // Details-Sektion (Die Ersetzungs-Historie "Wo")
-        val locations = status.enforcementLocations.toList()
-        if (locations.isNotEmpty()) {
-            val detailsPanel = JPanel(BorderLayout(0, 4))
-            detailsPanel.add(JBLabel("Details der Ersetzungen (libEntry -> Modul):").apply {
-                font = font.deriveFont(java.awt.Font.BOLD)
-            }, BorderLayout.NORTH)
-
-            val jbList = JBList(locations).apply {
-                cellRenderer = DefaultListCellRenderer() // Sauberes Standard-Rendering der Strings
-            }
-            
-            val scrollPane = JBScrollPane(jbList).apply {
-                preferredSize = Dimension(380, 120)
-                border = IdeBorderFactory.createBorder(SideBorder.ALL)
-            }
-            detailsPanel.add(scrollPane, BorderLayout.CENTER)
-            mainPanel.add(detailsPanel, BorderLayout.SOUTH)
-        } else if (status.checkedModules.get() > 0) {
-            val allGoodLabel = JBLabel("Alle Module sind konsistent.", AllIcons.General.InspectionsOK, SwingConstants.LEFT)
-            mainPanel.add(allGoodLabel, BorderLayout.SOUTH)
-        }
-
         return JBPopupFactory.getInstance()
             .createComponentPopupBuilder(mainPanel, null)
             .setMovable(true)
             .setRequestFocus(true)
+            .setCancelOnClickOutside(true)
             .createPopup()
     }
 }
-
