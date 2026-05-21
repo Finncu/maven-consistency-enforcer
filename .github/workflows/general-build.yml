@@ -34,7 +34,8 @@ jobs:
         with:
           package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
           package-type: 'maven'
-          min-versions-to-keep: 0
+          min-versions-to-keep: 1
+          num-old-versions-to-delete: 1
           token: '${{ github.token }}'
 #          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
 
