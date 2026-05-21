@@ -65,11 +65,9 @@ class EnforcerService(private val project: Project) {
     }
 
     private fun enforceModulesConsistency() {
+        currentStatus.ignoredModules.set(settings.state.excludedModules.size)
         val moduleMap = moduleManager.modules.mapNotNull { module ->
-            if (settings.state.excludedModules.contains(module.name)) {
-                currentStatus.ignoredModules.incrementAndGet() // Zähle ignoriertes Modul
-                return@mapNotNull null
-            }
+            if (settings.state.excludedModules.contains(module.name)) { return@mapNotNull null }
             val mavenProject = mavenProjectsManager.findProject(module) ?: return@mapNotNull null
             val artifactId = mavenProject.mavenId.artifactId ?: return@mapNotNull null
             artifactId to module
