@@ -34,10 +34,10 @@ jobs:
         with:
           package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
           package-type: 'maven'
-          num-old-versions-to-delete: 5
           min-versions-to-keep: 1
+
           token: '${{ github.token }}'
-          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
+#          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
