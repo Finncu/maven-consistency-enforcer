@@ -17,3 +17,35 @@ Default behavior:
 - Triggers automatically after Maven > Reload Project and (optionally) on project startup
 - Shows notifications about fixed dependencies
 - Re-enforces consistency on every Maven reload
+
+## Screenshots
+
+Below are a few screenshots illustrating MCE in action.
+
+### Status bar widget
+Displays enforcement state and quick toggles for the plugin.
+<p align="center">
+  <img src="documentation/images/status.png" alt="Status bar widget" width="480" />
+</p>
+
+### Notification example
+Informational notifications when the plugin fixes inconsistencies.
+<p align="center">
+  <img src="documentation/images/notification.png" alt="Notification example" width="480" />
+</p>
+
+### Before / After: Module enforcement
+The plugin can replace library entries with local module dependencies. Examples (blurred to focus on the UI):
+<p align="center">
+  <img src="documentation/images/blurred-before-module-enforcement.png" alt="Before enforcement" width="420" />
+</p>
+<p align="center">
+  <img src="documentation/images/blurred-after-module-enforcement.png" alt="After enforcement" width="420" />
+</p>
+
+### Settings
+Quick access to per-module enforcement configuration and the global toggle.
+<p align="center">
+  <img src="documentation/images/blurred-settings.png" alt="Settings view" width="420" />
+</p>
+
