@@ -5,16 +5,15 @@
 
 # Maven Consistency Enforcer (MCE)
 
-Stop fighting ghosts in your classpath!
+Stop fighting ghosts in your classpath! MCE ensures your IntelliJ IDEA run-time classpath matches the code in your workspace in multi-module Maven projects by detecting and removing stale JAR artifacts and preferring local module sources when available.
 
-MCE solves the frustrating problem of stale JAR artifacts preventing your code changes from reaching the running application in IntelliJ IDEA multimodule Maven projects.
+What it does:
+- Automatically removes attached JARs that shadow local modules
+- Replaces library entries with module dependencies when a matching module exists
+- Per-module enforcement configuration and global "All modules" toggle
+- Shows notifications and a status bar widget with enforcement metrics
 
-**What it does:**
-- Automatically removes attached jars
-- replaces library entries with module dependencies
-  -> if you have a module with code, use it
-
-**Default behavior:**
-- Triggers automatically after Maven > Reload Project
+Default behavior:
+- Triggers automatically after Maven > Reload Project and (optionally) on project startup
 - Shows notifications about fixed dependencies
 - Re-enforces consistency on every Maven reload

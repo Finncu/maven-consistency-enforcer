@@ -8,15 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [ ] Enforcement of using module source instead of artifacts or libraries
-  - [ ] Ability to specify which modules to enforce
-  - [ ] all modules toggle
-- [ ] Auto reimport on project startup to prevent using false local maven repository
+- Enforcement of using module source instead of artifacts or libraries
+  - Per-module enforcement configuration and an "All modules" toggle
+  - Automatic replacement of library entries with local module dependencies when a matching module is present
+- Status bar widget showing enforcement state and metrics, plus quick toggles
+- Automatic reimport on project startup to avoid using an out-of-date local Maven repository
+- Snapshot publishing CI step (MAIN-SNAPSHOT) for continuous validation
 
-### Features
+### Changed
 
-- [ ] **ModuleEnforcement**
-- [ ] **ProjectStartupFix**
+- Refactored consistency-check logic for improved reliability and clearer metrics
+- Improved logging and notification messages for enforcement operations
+- Threading and race-condition fixes in the enforcement logic
+
+### Fixed
+
+- Fixed cases where attached JAR cleanup could be missed due to timing/race conditions
 
 ## [1.0.0] - 2026-05-08
 
