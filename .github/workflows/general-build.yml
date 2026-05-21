@@ -30,13 +30,13 @@ jobs:
       #- name: Setup Gradle
       # uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-      - uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
-          package-type: 'maven'
-          min-versions-to-keep: 1
-          num-old-versions-to-delete: 1
-          token: '${{ github.token }}'
+#      - uses: actions/delete-package-versions@v5
+#        with:
+#          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
+#          package-type: 'maven'
+#          min-versions-to-keep: 1
+#          num-old-versions-to-delete: 1
+#          token: '${{ github.token }}'
 #          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
 
       - name: Make gradlew executable
@@ -45,6 +45,20 @@ jobs:
       - name: Build with Gradle Wrapper
         run: ./gradlew buildPlugin
 
+#      - uses: actions/delete-package-versions@v5
+#        with:
+#          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
+#          package-type: 'maven'
+#          num-old-versions-to-delete: 5
+#          min-versions-to-keep: 1
+#          token: '${{ github.token }}'
+#          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
+
+      - name: Publish Snapshot to GitHub Packages
+        run: |
+          ./gradlew publish -Pversion=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/delete-package-versions@v5
         with:
           package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
@@ -52,10 +66,3 @@ jobs:
           num-old-versions-to-delete: 5
           min-versions-to-keep: 1
           token: '${{ github.token }}'
-          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
-
-      - name: Publish Snapshot to GitHub Packages
-        run: |
-          ./gradlew publish
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
