@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-21
+
 ### Added
 
 - Enforcement of using module source instead of artifacts or libraries
@@ -57,5 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maven-only in v1.0. Gradle support planned for v1.1
 - Designed following fdm-plugin best practices with Gradle version catalog and property management
 
-[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.0.0...1.2.0
 [1.0.0]: https://github.com/finncu/maven-consistency-enforcer/commits/1.0.0
