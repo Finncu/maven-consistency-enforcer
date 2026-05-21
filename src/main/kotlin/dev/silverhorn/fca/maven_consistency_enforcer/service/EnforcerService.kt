@@ -32,12 +32,16 @@ class EnforcerService(private val project: Project) {
 
     fun runFullConsistencyCheck() {
         val startTime = System.currentTimeMillis()
-
         currentStatus.reset()
 
         logger.info("MCE: Starting full consistency check for ${moduleManager.modules.size} modules")
-        enforceModulesConsistency()
-        cleanupAttachedJars()
+
+        ApplicationManager.getApplication().invokeAndWait {
+            if (settings.state.forceLocalModules)
+                enforceModulesConsistency()
+            cleanupAttachedJars()
+        }
+
         // Status-Meta-Informationen belegen
         currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         currentStatus.durationMs = System.currentTimeMillis() - startTime

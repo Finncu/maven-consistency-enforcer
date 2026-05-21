@@ -2,8 +2,11 @@ package dev.silverhorn.fca.maven_consistency_enforcer.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
@@ -14,6 +17,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
+import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsConfigurable
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import java.awt.BorderLayout
 import java.awt.Cursor
@@ -23,6 +27,9 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, StatusBarWidget {
+    val enforcementService :EnforcerService by lazy { project.service() }
+    val settingsService :EnforcerSettingsStateService by lazy { project.service() }
+
 
     companion object {
         const val ID = "MceStatusBarWidget"
@@ -73,8 +80,7 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
     fun updateLabelText() {
         if (project.isDisposed) return
         try {
-            val service = project.getService(EnforcerService::class.java)
-            val total = service.currentStatus.removedAttachedJars.get()
+            val total = enforcementService.currentStatus.removedAttachedJars.get() + enforcementService.currentStatus.enforcementsCount.get()
             label.text = if (total > 0) "MCE | $total" else "MCE active"
             label.repaint()
         } catch (e: Exception) {
@@ -94,10 +100,9 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
     }
 
     private fun createStatusPopup(): com.intellij.openapi.ui.popup.JBPopup {
-        val service = project.getService(EnforcerService::class.java)
-        val status = service.currentStatus
+        var popup: JBPopup? = null
+        val status = enforcementService.currentStatus
 
-        val settingsService = project.getService(EnforcerSettingsStateService::class.java)
         val isEnabled = settingsService?.state?.isEnabled ?: true
         val forceLocalModules = settingsService?.state?.forceLocalModules ?: true
 
@@ -111,27 +116,27 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
         }, BorderLayout.WEST)
 
         val toolbarPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 5, 0))
-        val rerunButton = JButton(AllIcons.Actions.Refresh).apply {
-            toolTipText = "trigger manually"
-            isBorderPainted = false
-            isContentAreaFilled = false
-            addActionListener {
-                ApplicationManager.getApplication().executeOnPooledThread {
-                    service.runFullConsistencyCheck()
-                }
-            }
-            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        }
-//        val settingsButton = JButton(AllIcons.General.GearPlain).apply {
-//            toolTipText = "Einstellungen öffnen"
+//        val rerunButton = JButton(AllIcons.Actions.Refresh).apply {
+//            toolTipText = "trigger manually"
 //            isBorderPainted = false
 //            isContentAreaFilled = false
 //            addActionListener {
-//                ShowSettingsUtil.getInstance().showSettingsDialog(project, EnforcerSettingsConfigurable::class.java)
+//                enforcementService.runFullConsistencyCheck()
 //            }
+//            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 //        }
-        toolbarPanel.add(rerunButton)
-//        toolbarPanel.add(settingsButton)
+        val settingsButton = JButton(AllIcons.General.GearPlain).apply {
+            toolTipText = "Einstellungen öffnen"
+            isBorderPainted = false
+            isContentAreaFilled = false
+            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+            addActionListener {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, EnforcerSettingsConfigurable::class.java)
+                popup?.dispose()
+            }
+        }
+//        toolbarPanel.add(rerunButton)
+        toolbarPanel.add(settingsButton)
         headerPanel.add(toolbarPanel, BorderLayout.EAST)
         mainPanel.add(headerPanel, BorderLayout.NORTH)
 
@@ -150,27 +155,30 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
                 settingsService?.state?.forceLocalModules = this.isSelected
             }
         })
-        metricsPanel.add(JBLabel("checked modules:"))
-        metricsPanel.add(JBLabel(status.checkedModules.get().toString()))
-        metricsPanel.add(JBLabel("ignored modules:"))
-        metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
         metricsPanel.add(JBLabel("removed attached jars:"))
         metricsPanel.add(JBLabel("${status.removedAttachedJars.get()}"))
-        metricsPanel.add(JBLabel("enforced module usage:"))// flashcast - sollte noch überarbeitet werden
-        metricsPanel.add(JBLabel(status.enforcementsCount.get().toString()))
-        metricsPanel.add(JBLabel("processed dependencies:"))
-        metricsPanel.add(JBLabel("${status.processedLibraries}"))
+        if (forceLocalModules) {
+            metricsPanel.add(JBLabel("checked modules:"))
+            metricsPanel.add(JBLabel(status.checkedModules.get().toString()))
+            metricsPanel.add(JBLabel("ignored modules:"))
+            metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
+            metricsPanel.add(JBLabel("enforced module usage:"))
+            metricsPanel.add(JBLabel(status.enforcementsCount.get().toString()))
+            metricsPanel.add(JBLabel("processed dependencies:"))
+            metricsPanel.add(JBLabel("${status.processedLibraries}"))
+        }
         metricsPanel.add(JBLabel("last run:"))
         metricsPanel.add(JBLabel("${status.lastUpdated} (${status.durationMs} ms)"))
 
         contentPanel.add(metricsPanel, BorderLayout.CENTER)
         mainPanel.add(contentPanel, BorderLayout.CENTER)
 
-        return JBPopupFactory.getInstance()
+        popup = JBPopupFactory.getInstance()
             .createComponentPopupBuilder(mainPanel, null)
             .setMovable(true)
             .setRequestFocus(true)
             .setCancelOnClickOutside(true)
             .createPopup()
+        return popup
     }
 }

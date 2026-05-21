@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.and
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -41,6 +42,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
         uiPanel = panel {
             // Wir weisen der Haupt-Checkbox eine Variable zu, um andere Elemente daran zu binden
             lateinit var mainEnforcerCb: Cell<com.intellij.ui.components.JBCheckBox>
+            lateinit var moduleEnforcingCb: Cell<com.intellij.ui.components.JBCheckBox>
 
             row {
                 mainEnforcerCb = checkBox("Enable Maven Consistency Enforcer")
@@ -48,7 +50,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
             }
 
             row {
-                checkBox("Enable Enforcement of Local Module Usage")
+                moduleEnforcingCb = checkBox("Enable Enforcement of Local Module Usage")
                     .bindSelected(state::forceLocalModules)
                     // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
                     .enabledIf(mainEnforcerCb.selected)
@@ -67,7 +69,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                         .align(AlignX.FILL)
                         .comment("Checked modules will not be modified by the consistency enforcer.")
                 }
-            }.enabledIf(mainEnforcerCb.selected)
+            }.enabledIf(mainEnforcerCb.selected.and(moduleEnforcingCb.selected))
 
             group("Logging") {
                 row("Log Level:") {
