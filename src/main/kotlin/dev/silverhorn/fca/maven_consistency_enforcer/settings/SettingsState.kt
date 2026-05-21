@@ -10,7 +10,7 @@ enum class LogLevel {
  */
 data class EnforcerSettingsState(
     var isEnabled: Boolean = true,
-    var forceLocalModules: Boolean = true,
+    var forceLocalModules: Boolean = false,
     var excludedModules: List<String> = emptyList(),
     var logVerbosity: LogLevel = LogLevel.INFO
 )
