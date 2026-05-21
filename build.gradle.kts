@@ -145,7 +145,7 @@ publishing {
         register<MavenPublication>("gpr") {
             groupId = providers.gradleProperty("pluginGroup").get()
             artifactId = providers.gradleProperty("pluginId").get()
-            version = providers.gradleProperty("pluginVersion").get()
+            version = project.version.toString()
 
             // Attach the built plugin ZIP as artifact
             artifact(tasks.buildPlugin.get().archiveFile) {
