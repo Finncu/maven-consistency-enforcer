@@ -50,7 +50,7 @@ jobs:
         uses: actions/delete-package-versions@v5
         with:
           # Der Name deines Packages (meistens deine artifactId aus der pom.xml)
-          package-name: 'maven-consistency-enforcer'
+          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
           package-type: 'maven'
           # Übergibt die Version aus dem manuellen Start-Input oben
           version-names: ${{ github.ref_name }}
