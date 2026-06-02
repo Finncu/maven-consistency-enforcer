@@ -12,11 +12,17 @@ What it does:
 - Replaces library entries with module dependencies when a matching module exists
 - Per-module enforcement configuration and global "All modules" toggle
 - Shows notifications and a status bar widget with enforcement metrics
+- Ensures your local Maven repository paths are valid on startup
+- Includes localization support
+- Provides a persistence cache for faster operations
+- Offers a Maven sync health check
 
 Default behavior:
 - Triggers automatically after Maven > Reload Project and (optionally) on project startup
 - Shows notifications about fixed dependencies
 - Re-enforces consistency on every Maven reload
+- `forceLocalModules` and repository health check will be questioned on first run
+
 
 ## Screenshots
 
