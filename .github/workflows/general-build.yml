@@ -64,7 +64,7 @@ jobs:
 
       - name: Publish Snapshot to GitHub Packages
         run: |
-          ./gradlew publish
+          ./gradlew publish -PpluginVersion="MAIN-SNAPSHOT-${{ github.run_number }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}
 #      - uses: actions/delete-package-versions@v5
