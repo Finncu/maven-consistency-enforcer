@@ -16,7 +16,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -45,18 +46,18 @@ jobs:
       - name: Build with Gradle Wrapper
         run: ./gradlew buildPlugin
 
-#      - uses: actions/delete-package-versions@v5
-#        with:
-#          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
-#          package-type: 'maven'
-#          num-old-versions-to-delete: 5
-#          min-versions-to-keep: 1
-#          token: '${{ github.token }}'
-#          ignore-versions: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$'
+      - name: Delete targeted Maven Package Version
+        uses: actions/delete-package-versions@v5
+        with:
+          # Der Name deines Packages (meistens deine artifactId aus der pom.xml)
+          package-name: 'maven-consistency-enforcer'
+          package-type: 'maven'
+          # Übergibt die Version aus dem manuellen Start-Input oben
+          version-names: ${{ github.ref_name }}
 
       - name: Publish Snapshot to GitHub Packages
         run: |
-          ./gradlew publish -Pversion=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S') -Prevision=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')
+          ./gradlew publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
 #      - uses: actions/delete-package-versions@v5
