@@ -42,6 +42,10 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew buildPlugin
+
       - name: Delete Entire Package Repository via GitHub API
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,9 +61,6 @@ jobs:
             /user/packages/maven/dev.silverhorn.fca.maven-consistency-enforcer
           
           echo "Das Package wurde erfolgreich vollständig gelöscht."
-
-      - name: Build with Gradle Wrapper
-        run: ./gradlew buildPlugin
 
       - name: Publish Snapshot to GitHub Packages
         run: |
