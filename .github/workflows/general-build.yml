@@ -43,8 +43,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle Wrapper
-        run: ./gradlew buildPlugin
+#      - name: Build with Gradle Wrapper
+#        run: ./gradlew buildPlugin
 
       - name: Delete Entire Package Repository via GitHub API
         env:
@@ -64,7 +64,7 @@ jobs:
 
       - name: Publish Snapshot to GitHub Packages
         run: |
-          ./gradlew publish -PpluginVersion="MAIN-SNAPSHOT-${{ github.run_number }}"
+          ./gradlew publish -PpluginVersion="MAIN-SNAPSHOT"
         env:
           GITHUB_TOKEN: ${{ github.token }}
 #      - uses: actions/delete-package-versions@v5
