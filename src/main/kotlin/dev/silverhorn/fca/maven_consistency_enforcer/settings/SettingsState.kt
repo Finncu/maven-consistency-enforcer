@@ -10,7 +10,10 @@ enum class LogLevel {
  */
 data class EnforcerSettingsState(
     var isEnabled: Boolean = true,
-    var forceLocalModules: Boolean = false,
+    var enforceModuleLinking: Boolean? = null,
     var excludedModules: List<String> = emptyList(),
-    var logVerbosity: LogLevel = LogLevel.INFO
+    var logLevel: LogLevel = LogLevel.INFO,
+
+    /** Führt beim Starten des Projekts eine Konsistenzprüfung durch. */
+    var runInitialHealthCheck: Boolean? = null
 )

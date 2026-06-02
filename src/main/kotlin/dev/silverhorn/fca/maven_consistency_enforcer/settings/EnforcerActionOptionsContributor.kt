@@ -35,14 +35,25 @@ class EnforcerSearchableOptionContributor : SearchableOptionContributor() {
             "Maven Consistency Enforcer: Enable Enforcement of Local Module Usage",
             configurableId
         ) {
-            override fun isOptionEnabled(): Boolean = getSettingsState()?.forceLocalModules ?: true
+            override fun isOptionEnabled(): Boolean = getSettingsState()?.enforceModuleLinking ?: true
             override fun setOptionState(enabled: Boolean) {
-                getSettingsState()?.forceLocalModules = enabled
+                getSettingsState()?.enforceModuleLinking = enabled
+            }
+        }
+
+        val repoConfigHealthOption = object : BooleanOptionDescription(
+            "Maven Consistency Enforcer: Enable Maven Sync Fix",
+            configurableId
+        ) {
+            override fun isOptionEnabled(): Boolean = getSettingsState()?.runInitialHealthCheck ?: true
+            override fun setOptionState(enabled: Boolean) {
+                getSettingsState()?.runInitialHealthCheck = enabled
             }
         }
 
         // Dem Prozessor hinzufügen, damit sie in Doppel-Shift indiziert werden
         processor.addOptions(enablePluginOption.option!!, null, enablePluginOption.option, configurableId, settingsPath, true)
         processor.addOptions(forceModulesOption.option!!, null, forceModulesOption.option, configurableId, settingsPath, true)
+        processor.addOptions(repoConfigHealthOption.option!!, null, repoConfigHealthOption.option, configurableId, settingsPath, true)
     }
 }

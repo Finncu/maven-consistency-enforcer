@@ -9,8 +9,13 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.WindowManager
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerConstants
+import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsState
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidget
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -30,23 +35,42 @@ class EnforcerService(private val project: Project) {
 
     val currentStatus = EnforcerStatus()
 
-    fun runFullConsistencyCheck() {
+    private fun chooseenforceModuleLinking(project: Project, state: EnforcerSettingsState): Boolean {
+        val res = Messages.showYesNoDialog(
+            project,
+            EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.message"),
+            EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.title"),
+            Messages.getQuestionIcon()
+        )
+        if (res != Messages.CANCEL)
+            return (Messages.YES == res).let {
+                state.enforceModuleLinking = it; return it
+            }
+        else return false
+    }
+
+    fun runConsistencyCheck() {
+        ApplicationManager.getApplication().invokeAndWait {
+            settings.state.enforceModuleLinking ?: chooseenforceModuleLinking(project, settings.state)
+        }
+
         val startTime = System.currentTimeMillis()
         currentStatus.reset()
 
-        logger.info("MCE: Starting full consistency check for ${moduleManager.modules.size} modules")
+        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.start", moduleManager.modules.size))
 
         ApplicationManager.getApplication().invokeAndWait {
-            if (settings.state.forceLocalModules)
+            if (settings.state.enforceModuleLinking!!)
                 enforceModulesConsistency()
             cleanupAttachedJars()
         }
+        ProjectRootManager.getInstance(project).incModificationCount()
 
         // Status-Meta-Informationen belegen
-        currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+        currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
         currentStatus.durationMs = System.currentTimeMillis() - startTime
 
-        logger.info("MCE: Consistency check completed. Total replacements: ${currentStatus.enforcementsCount}")
+        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.completed", currentStatus.enforcementsCount))
 
         // UI Thread-sicher benachrichtigen
         updateStatusBar()
@@ -58,10 +82,10 @@ class EnforcerService(private val project: Project) {
         WriteAction.run<RuntimeException> {
             val tableModel = libraryTable.modifiableModel
             for (library in libraryTable.libraries) {
-                if (library?.name?.contains("ATTACHED-JAR") ?: false) {
+                if (library?.name?.contains(EnforcerConstants.ATTACHED_JAR_IDENTIFIER) ?: false) {
                     tableModel.removeLibrary(library)
                     currentStatus.removedAttachedJars.incrementAndGet()
-                    logger.debug("MCE: Removed unused project library " + library.name)
+                    logger.debug(EnforcerBundle.message("service.enforcer.cleanup.removedLibrary", library.name))
                 }
             }
             tableModel.commit()
@@ -71,7 +95,9 @@ class EnforcerService(private val project: Project) {
     private fun enforceModulesConsistency() {
         currentStatus.ignoredModules.set(settings.state.excludedModules.size)
         val moduleMap = moduleManager.modules.mapNotNull { module ->
-            if (settings.state.excludedModules.contains(module.name)) { return@mapNotNull null }
+            if (settings.state.excludedModules.contains(module.name)) {
+                return@mapNotNull null
+            }
             val mavenProject = mavenProjectsManager.findProject(module) ?: return@mapNotNull null
             val artifactId = mavenProject.mavenId.artifactId ?: return@mapNotNull null
             artifactId to module
@@ -94,6 +120,7 @@ class EnforcerService(private val project: Project) {
                     model.removeOrderEntry(libEntry)
                     model.addModuleOrderEntry(targetModule)
                     currentStatus.enforcementsCount.incrementAndGet()
+                    currentStatus.recordEnforcement(module.name, targetModule.name)
                 }
 
                 if (replacements.isNotEmpty()) {
@@ -105,13 +132,14 @@ class EnforcerService(private val project: Project) {
                 updateStatusBar()
             }
         }
+        ProjectRootManager.getInstance(project).incModificationCount()
     }
 
     private fun extractArtifactId(libraryName: String): String? {
         val gavRes: String? = mvnPattern.find(libraryName)?.groupValues[1]
             ?: gavPattern.find(libraryName)?.groupValues[1]
         if (gavRes == null)
-            logger.warn("$libraryName doesnt match GAV-C")
+            logger.warn(EnforcerBundle.message("service.enforcer.gavMismatch.warning", libraryName))
         return gavRes
     }
 
