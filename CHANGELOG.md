@@ -53,8 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Notes
 
-- Status Bar Widget is implemented but not registered in 1.0.0
-- Maven-only in v1.0. Gradle support planned for v1.1
 - Designed following fdm-plugin best practices with Gradle version catalog and property management
 
 [Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.0.0...HEAD

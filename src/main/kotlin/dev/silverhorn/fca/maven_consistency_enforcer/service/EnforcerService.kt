@@ -2,8 +2,6 @@ package dev.silverhorn.fca.maven_consistency_enforcer.service
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -11,18 +9,16 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.WindowManager
-import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerConstants
+import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsState
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidget
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import java.io.File
-import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -39,24 +35,42 @@ class EnforcerService(private val project: Project) {
 
     val currentStatus = EnforcerStatus()
 
-    fun runFullConsistencyCheck() {
+    private fun chooseenforceModuleLinking(project: Project, state: EnforcerSettingsState): Boolean {
+        val res = Messages.showYesNoDialog(
+            project,
+            EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.message"),
+            EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.title"),
+            Messages.getQuestionIcon()
+        )
+        if (res != Messages.CANCEL)
+            return (Messages.YES == res).let {
+                state.enforceModuleLinking = it; return it
+            }
+        else return false
+    }
+
+    fun runConsistencyCheck() {
+        ApplicationManager.getApplication().invokeAndWait {
+            settings.state.enforceModuleLinking ?: chooseenforceModuleLinking(project, settings.state)
+        }
+
         val startTime = System.currentTimeMillis()
         currentStatus.reset()
 
-        logger.info("MCE: Starting full consistency check for ${moduleManager.modules.size} modules")
+        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.start", moduleManager.modules.size))
 
         ApplicationManager.getApplication().invokeAndWait {
-            if (settings.state.forceLocalModules)
+            if (settings.state.enforceModuleLinking!!)
                 enforceModulesConsistency()
             cleanupAttachedJars()
         }
         ProjectRootManager.getInstance(project).incModificationCount()
 
         // Status-Meta-Informationen belegen
-        currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+        currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
         currentStatus.durationMs = System.currentTimeMillis() - startTime
 
-        logger.info("MCE: Consistency check completed. Total replacements: ${currentStatus.enforcementsCount}")
+        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.completed", currentStatus.enforcementsCount))
 
         // UI Thread-sicher benachrichtigen
         updateStatusBar()
@@ -68,48 +82,16 @@ class EnforcerService(private val project: Project) {
         WriteAction.run<RuntimeException> {
             val tableModel = libraryTable.modifiableModel
             for (library in libraryTable.libraries) {
-                if (library?.name?.contains("ATTACHED-JAR") ?: false) {
+                if (library?.name?.contains(EnforcerConstants.ATTACHED_JAR_IDENTIFIER) ?: false) {
                     tableModel.removeLibrary(library)
                     currentStatus.removedAttachedJars.incrementAndGet()
-                    logger.debug("MCE: Removed unused project library " + library.name)
+                    logger.debug(EnforcerBundle.message("service.enforcer.cleanup.removedLibrary", library.name))
                 }
             }
             tableModel.commit()
         }
     }
 
-   fun fixMavenRepository() {
-    logger.info("MCE: Starte Überprüfung der Maven-Repository-Pfade (IDEA-377511)")
-    
-    // Das verlässliche Logging via Notification ausführen
-    MceNotification.showInfo(project, "MCE: checking repo usage")
-
-    val expectedRepoPath = mavenProjectsManager.generalSettings.localRepository ?: return
-    val expectedCanonical = File(expectedRepoPath).canonicalPath
-    val defaultM2Path = File(System.getProperty("user.home"), ".m2/repository").canonicalPath
-
-    // Wenn das erwartete Repo ohnehin das Default-Verzeichnis ist, liegt der Bug hier nicht vor
-    if (expectedCanonical == defaultM2Path) {
-        logger.info("MCE: Erwartetes Repo entspricht Default-M2. Keine Korrektur nötig.")
-        return
-    }
-
-    // Wir triggern den zukunftssicheren, inkrementellen Sync im EDT, 
-    // um die Hoheit des Maven-Subsystems über den Classpath zu wahren.
-    ApplicationManager.getApplication().invokeLater {
-        logger.info("MCE: Triggere inkrementellen Maven-Sync zur Behebung von IDEA-377511...")
-        
-        // Verhindert das "stumpfe Neuladen" (Full Reload) und aktualisiert nur die Pfad-Strukturen
-        mavenProjectsManager.scheduleUpdateAllMavenProjects(
-            MavenSyncSpec.incremental("MCE: Fix Maven Repository Path Alignment")
-        )
-        
-        currentStatus.enforcementsCount.incrementAndGet()
-        updateStatusBar()
-        
-        MceNotification.showInfo(project, "MCE: Inkrementeller Sync zur Pfad-Korrektur eingeleitet.")
-    }
-}
     private fun enforceModulesConsistency() {
         currentStatus.ignoredModules.set(settings.state.excludedModules.size)
         val moduleMap = moduleManager.modules.mapNotNull { module ->
@@ -157,7 +139,7 @@ class EnforcerService(private val project: Project) {
         val gavRes: String? = mvnPattern.find(libraryName)?.groupValues[1]
             ?: gavPattern.find(libraryName)?.groupValues[1]
         if (gavRes == null)
-            logger.warn("$libraryName doesnt match GAV-C")
+            logger.warn(EnforcerBundle.message("service.enforcer.gavMismatch.warning", libraryName))
         return gavRes
     }
 

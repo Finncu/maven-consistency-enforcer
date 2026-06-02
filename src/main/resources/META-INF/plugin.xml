@@ -56,6 +56,13 @@ Behavior:
                 description="Toggle enforcement of local module dependencies over Maven artifacts">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+
+        <action id="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceToggleRepoConfigHealthAction"
+                class="dev.silverhorn.fca.maven_consistency_enforcer.settings.actions.MceToggleRepoConfigHealthAction"
+                text="Maven Consistency Enforcer: Enable Maven Sync Fix"
+                description="Apply automated Maven repository and classpath fixes for your custom repository setup?">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 
     <projectListeners>

@@ -1,5 +1,6 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.service
 
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -14,7 +15,7 @@ data class EnforcerStatus(
      * Spiegelt wider, welche Maven-Library-Eintrge durch Modul-Eintrge ersetzt wurden.
      */
     val enforcedDependencies: MutableMap<String, MutableList<String>> = ConcurrentHashMap(),
-    @Volatile var lastUpdated: String = "not yet executed",
+    @Volatile var lastUpdated: String = EnforcerBundle.message("service.enforcer.status.notYetExecuted"),
     @Volatile var durationMs: Long = 0
 ) {
     fun reset() {

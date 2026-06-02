@@ -4,6 +4,7 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 
 /**
  * MceNotification: Zentralisiertes Notification-System für MCE.
@@ -40,7 +41,7 @@ object MceNotification {
      * @param message Die anzuzeigende Nachricht
      * @param title Optionaler Titel (Standard: "Maven Consistency Enforcer")
      */
-    fun showInfo(project: Project, message: String, title: String = "Maven Consistency Enforcer") {
+    fun showInfo(project: Project, message: String, title: String = EnforcerBundle.message("notification.title")) {
         val notification = getNotificationGroup()
             .createNotification(title, message, NotificationType.INFORMATION)
         notification.notify(project)
@@ -57,7 +58,7 @@ object MceNotification {
      * @param message Die anzuzeigende Nachricht
      * @param title Optionaler Titel (Standard: "Maven Consistency Enforcer")
      */
-    fun showWarning(project: Project, message: String, title: String = "Maven Consistency Enforcer") {
+    fun showWarning(project: Project, message: String, title: String = EnforcerBundle.message("notification.title")) {
         val notification = getNotificationGroup()
             .createNotification(title, message, NotificationType.WARNING)
         notification.notify(project)
@@ -73,10 +74,9 @@ object MceNotification {
      * @param message Die anzuzeigende Fehlermeldung
      * @param title Optionaler Titel (Standard: "Maven Consistency Enforcer")
      */
-    fun showError(project: Project, message: String, title: String = "Maven Consistency Enforcer") {
+    fun showError(project: Project, message: String, title: String = EnforcerBundle.message("notification.title")) {
         val notification = getNotificationGroup()
             .createNotification(title, message, NotificationType.ERROR)
         notification.notify(project)
     }
 }
-

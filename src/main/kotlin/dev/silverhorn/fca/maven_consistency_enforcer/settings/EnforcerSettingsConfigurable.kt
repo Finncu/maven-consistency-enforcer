@@ -8,6 +8,7 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.and
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -21,7 +22,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
     private val checkBoxList = CheckBoxList<String>()
 
     override fun getId(): String = "dev.silverhorn.fca.maven_consistency_enforcer.settings"
-    override fun getDisplayName(): String = "Maven Consistency Enforcer"
+    override fun getDisplayName(): String = EnforcerBundle.message("settings.configurable.displayName")
 
     override fun createComponent(): JComponent {
         val state = settingsService.state
@@ -43,23 +44,39 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
             // Wir weisen der Haupt-Checkbox eine Variable zu, um andere Elemente daran zu binden
             lateinit var mainEnforcerCb: Cell<com.intellij.ui.components.JBCheckBox>
             lateinit var moduleEnforcingCb: Cell<com.intellij.ui.components.JBCheckBox>
+            lateinit var initialMavenSyncCb: Cell<com.intellij.ui.components.JBCheckBox>
 
             row {
-                mainEnforcerCb = checkBox("Enable Maven Consistency Enforcer")
+                mainEnforcerCb = checkBox(EnforcerBundle.message("settings.configurable.enablePlugin.checkbox"))
                     .bindSelected(state::isEnabled)
             }
 
             row {
-                moduleEnforcingCb = checkBox("Enable Enforcement of Local Module Usage")
-                    .bindSelected(state::forceLocalModules)
+                initialMavenSyncCb = checkBox(EnforcerBundle.message("settings.configurable.enableMavenSyncFix.checkbox"))
+                    .bindSelected(
+                                { state.runInitialHealthCheck ?: false }, // Getter: null wird zu false
+                                { state.runInitialHealthCheck = it }      // Setter: schreibt normales Boolean zurück
+                            )
                     // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
                     .enabledIf(mainEnforcerCb.selected)
+                    .apply { component.name = "initialMavenSyncCb" }
+            }
+
+            row {
+                moduleEnforcingCb = checkBox(EnforcerBundle.message("settings.configurable.enableLocalModuleUsage.checkbox"))
+                    .bindSelected(
+                                { state.enforceModuleLinking ?: false }, // Getter: null wird zu false
+                                { state.enforceModuleLinking = it }      // Setter: schreibt normales Boolean zurück
+                            )
+                    // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
+                    .enabledIf(mainEnforcerCb.selected)
+                    .apply { component.name = "moduleEnforcingCb" }
             }
 
             // Die gesamte Gruppe deaktiviert sich visuell, wenn das Haupt-Plugin ausgeschaltet ist
-            group("Exclusion Rules") {
+            group(EnforcerBundle.message("settings.configurable.exclusionRules.group")) {
                 row {
-                    label("Select modules to exclude from enforcing:")
+                    label(EnforcerBundle.message("settings.configurable.exclusionRules.label"))
                 }
                 row {
                     val scrollPane = JBScrollPane(checkBoxList).apply {
@@ -67,16 +84,16 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                     }
                     cell(scrollPane)
                         .align(AlignX.FILL)
-                        .comment("Checked modules will not be modified by the consistency enforcer.")
+                        .comment(EnforcerBundle.message("settings.configurable.exclusionRules.comment"))
                 }
             }.enabledIf(mainEnforcerCb.selected.and(moduleEnforcingCb.selected))
 
-            group("Logging") {
-                row("Log Level:") {
+            group(EnforcerBundle.message("settings.configurable.logging.group")) {
+                row(EnforcerBundle.message("settings.configurable.logging.logLevel.label")) {
                     comboBox(LogLevel.values().toList())
                         .bindItem(
-                            getter = { state.logVerbosity },
-                            setter = { value -> state.logVerbosity = value ?: LogLevel.INFO }
+                            getter = { state.logLevel },
+                            setter = { value -> state.logLevel = value ?: LogLevel.INFO }
                         )
                 }
             }

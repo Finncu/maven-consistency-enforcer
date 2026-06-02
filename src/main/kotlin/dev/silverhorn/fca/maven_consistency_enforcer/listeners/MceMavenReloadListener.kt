@@ -1,12 +1,11 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.listeners
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.jetbrains.rhizomedb.requireChangeScope
+import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
@@ -27,25 +26,25 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
             return
         }
 
-        MceNotification.showInfo(project, "Maven Reload detected. MCE is checking consistency...")
+        MceNotification.showInfo(project, EnforcerBundle.message("listener.mavenReload.info.checkingConsistency"))
 
-        progressManager.run(object : Task.Backgroundable(project, "MCE: Enforcing Module Consistency", false) {
+        progressManager.run(object : Task.Backgroundable(project, EnforcerBundle.message("listener.mavenReload.task.title"), false) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
                 try {
-                    indicator.text = "MCE: Restructuring module dependencies..."
+                    indicator.text = EnforcerBundle.message("listener.mavenReload.task.indicatorText")
                     indicator.isIndeterminate = true
 
                     // Übergabe der Einstellungen an den Service
-                    enforcerService.runFullConsistencyCheck()
+                    enforcerService.runConsistencyCheck()
 
                     var changeCount = enforcerService.currentStatus.enforcementsCount.get() + enforcerService.currentStatus.removedAttachedJars.get()
 
                     if (changeCount > 0) {
-                        MceNotification.showInfo(project, "MCE: Fixed $changeCount dependencies")
+                        MceNotification.showInfo(project, EnforcerBundle.message("listener.mavenReload.info.fixedDependencies", changeCount))
                     }
                 } catch (e: Exception) {
-                    logger.error("MCE: Error during consistency enforcement")
-                    MceNotification.showError(project, "MCE: Error during enforcement - ${e.message}")
+                    logger.error(EnforcerBundle.message("listener.mavenReload.error.enforcement"))
+                    MceNotification.showError(project, EnforcerBundle.message("listener.mavenReload.error.enforcementWithMessage", e.message?:""))
                     throw e
                 }
             }
