@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListRestoreState">
+    <option name="sessions">
+      <mapping-restore-session sessionId="8bb30180-f298-4e0d-956e-ac06d8578e6a" rootPath="" vcsType="Git" createdAt="1778691845017" status="CAPTURED">
+        <option name="entries">
+          <change-entry beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" changeType="MODIFICATION" targetChangeListName="Changes" targetChangeListComment="using changelog as project board" restoreStatus="PENDING" />
+          <change-entry beforePath="$PROJECT_DIR$/gradle.properties" afterPath="$PROJECT_DIR$/gradle.properties" changeType="MODIFICATION" targetChangeListName="flashcast" targetChangeListComment="" restoreStatus="PENDING" />
+        </option>
+      </mapping-restore-session>
+      <mapping-restore-session sessionId="6f437458-0ccc-4ee1-86ea-b70646b2a24f" rootPath="$PROJECT_DIR$" vcsType="Git" createdAt="1778833899067" restoredAt="1778833901924" status="PARTIALLY_RESTORED">
+        <option name="entries">
+          <change-entry beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" changeType="MODIFICATION" targetChangeListName="Changes" targetChangeListComment="using changelog as project board" restoreStatus="RESTORED" />
+          <change-entry beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" changeType="MODIFICATION" targetChangeListName="Changes" targetChangeListComment="using changelog as project board" restoreStatus="RESTORED" />
+          <change-entry beforePath="$PROJECT_DIR$/gradle.properties" afterPath="$PROJECT_DIR$/gradle.properties" changeType="MODIFICATION" targetChangeListName="flashcast" targetChangeListComment="" restoreStatus="FAILED" />
+        </option>
+      </mapping-restore-session>
+    </option>
+  </component>
+</project>
