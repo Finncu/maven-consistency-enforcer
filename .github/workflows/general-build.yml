@@ -56,13 +56,13 @@ jobs:
 
       - name: Publish Snapshot to GitHub Packages
         run: |
-          ./gradlew publish -Pversion=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')
+          ./gradlew publish -Pversion=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S') -Prevision=${{ github.ref_name }}-$(date +'%Y%m%d-%H%M%S')
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
-          package-type: 'maven'
-          num-old-versions-to-delete: 5
-          min-versions-to-keep: 1
-          token: '${{ github.token }}'
+#      - uses: actions/delete-package-versions@v5
+#        with:
+#          package-name: 'dev.silverhorn.fca.maven-consistency-enforcer'
+#          package-type: 'maven'
+#          num-old-versions-to-delete: 5
+#          min-versions-to-keep: 1
+#          token: '${{ github.token }}'
