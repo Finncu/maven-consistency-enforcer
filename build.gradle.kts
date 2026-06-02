@@ -150,6 +150,9 @@ publishing {
             // Attach the built plugin ZIP as artifact
             artifact(tasks.buildPlugin.get().archiveFile) {
                 classifier = "plugin"
+                artifactId = providers.gradleProperty("pluginId").get()
+                groupId = providers.gradleProperty("pluginGroup").get()
+                version = providers.gradleProperty("pluginVersion").get()
                 extension = "zip"
             }
         }

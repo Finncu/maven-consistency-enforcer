@@ -39,6 +39,7 @@ Behavior:
         <search.optionContributor
                 implementation="dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSearchableOptionContributor"/>
         <notificationGroup id="Maven Consistency Enforcer" displayType="BALLOON" isLogByDefault="true"/>
+        <postStartupActivity implementation="dev.silverhorn.fca.maven_consistency_enforcer.activities.MavenRepositoryEnforcerActivity"/>
     </extensions>
 
     <actions>
