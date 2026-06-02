@@ -15,12 +15,14 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.WindowManager
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidget
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.io.File
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -48,6 +50,7 @@ class EnforcerService(private val project: Project) {
                 enforceModulesConsistency()
             cleanupAttachedJars()
         }
+        ProjectRootManager.getInstance(project).incModificationCount()
 
         // Status-Meta-Informationen belegen
         currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
@@ -74,95 +77,40 @@ class EnforcerService(private val project: Project) {
             tableModel.commit()
         }
     }
-fun fixMavenRepository() {
-    logger.info("MCE: Starte globale Classpath-Korrektur über LibraryTable (IDEA-377511)")
+
+   fun fixMavenRepository() {
+    logger.info("MCE: Starte Überprüfung der Maven-Repository-Pfade (IDEA-377511)")
     
-    // Das funktioniert garantiert zum Loggen
-    MceNotification.showInfo(project, "MCE: checking repo usage") //
+    // Das verlässliche Logging via Notification ausführen
+    MceNotification.showInfo(project, "MCE: checking repo usage")
 
     val expectedRepoPath = mavenProjectsManager.generalSettings.localRepository ?: return
     val expectedCanonical = File(expectedRepoPath).canonicalPath
     val defaultM2Path = File(System.getProperty("user.home"), ".m2/repository").canonicalPath
 
+    // Wenn das erwartete Repo ohnehin das Default-Verzeichnis ist, liegt der Bug hier nicht vor
     if (expectedCanonical == defaultM2Path) {
-        logger.info("MCE: Keine Korrektur nötig, da Default-Repo genutzt wird.")
+        logger.info("MCE: Erwartetes Repo entspricht Default-M2. Keine Korrektur nötig.")
         return
     }
 
-    val librariesToFix = mutableListOf<Pair<String, List<String>>>()
-
-    // 1. READ ACTION: Betroffene Libraries identifizieren
-    ReadAction.run<RuntimeException> {
-        val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-        for (library in libraryTable.libraries) {
-            if (library == null || library.name == null) continue
-
-            val classesUrls = library.getUrls(OrderRootType.CLASSES)
-            val buggyUrls = classesUrls.filter { url ->
-                url.contains(".m2/repository") && !url.contains(expectedCanonical)
-            }
-
-            if (buggyUrls.isNotEmpty()) {
-                librariesToFix.add(library.name!! to buggyUrls)
-            }
-        }
-    }
-
-    if (librariesToFix.isEmpty()) {
-        logger.info("MCE: Keine fehlerhaften Pfade gefunden.")
-        return
-    }
-
-    // 2. WRITE ACTION auf dem EDT
+    // Wir triggern den zukunftssicheren, inkrementellen Sync im EDT, 
+    // um die Hoheit des Maven-Subsystems über den Classpath zu wahren.
     ApplicationManager.getApplication().invokeLater {
-        WriteAction.run<RuntimeException> {
-            val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-            val tableModel = libraryTable.modifiableModel
-            var anyLibraryChanged = false
-            var fixCount = 0
-
-            for ((libName, buggyUrls) in librariesToFix) {
-                val libraryInTable = tableModel.getLibraryByName(libName) ?: continue
-                val libModel = libraryInTable.modifiableModel
-
-                for (url in buggyUrls) {
-                    val correctedUrl = url.replace(defaultM2Path, expectedCanonical)
-                    
-                    // Root entfernen und korrigierten Pfad hinzufügen
-                    libModel.removeRoot(url, OrderRootType.CLASSES)
-                    libModel.addRoot(correctedUrl, OrderRootType.CLASSES)
-                    
-                    currentStatus.enforcementsCount.incrementAndGet()
-                    fixCount++
-                    logger.debug("MCE: Root korrigiert: $libName -> $correctedUrl")
-                }
-
-                libModel.commit()
-                anyLibraryChanged = true
-            }
-
-            if (anyLibraryChanged) {
-                // Das Tabellenmodell committen
-                tableModel.commit()
-
-                // CHIRURGISCHER SCHRITT: Den globalen ModificationCount des Projekts hochzählen!
-                // Das zwingt IntelliJ, alle externen Caches (inkl. der Project Structure UI) wegzuschmeißen.
-                ProjectRootManager.getInstance(project).incModificationCount()
-
-                logger.info("MCE: Globale LibraryTable-Änderungen committet und Caches invalidiert.")
-                
-                updateStatusBar()
-                MceNotification.showInfo(
-                    project, 
-                    "MCE: Fixed $fixCount library paths from resetting bug." //
-                )
-            } else {
-                tableModel.dispose()
-            }
-        }
+        logger.info("MCE: Triggere inkrementellen Maven-Sync zur Behebung von IDEA-377511...")
+        
+        // Verhindert das "stumpfe Neuladen" (Full Reload) und aktualisiert nur die Pfad-Strukturen
+        mavenProjectsManager.scheduleUpdateAllMavenProjects(
+            MavenSyncSpec.incremental("MCE: Fix Maven Repository Path Alignment")
+        )
+        
+        currentStatus.enforcementsCount.incrementAndGet()
+        updateStatusBar()
+        
+        MceNotification.showInfo(project, "MCE: Inkrementeller Sync zur Pfad-Korrektur eingeleitet.")
     }
-} 
-private fun enforceModulesConsistency() {
+}
+    private fun enforceModulesConsistency() {
         currentStatus.ignoredModules.set(settings.state.excludedModules.size)
         val moduleMap = moduleManager.modules.mapNotNull { module ->
             if (settings.state.excludedModules.contains(module.name)) {
@@ -190,6 +138,7 @@ private fun enforceModulesConsistency() {
                     model.removeOrderEntry(libEntry)
                     model.addModuleOrderEntry(targetModule)
                     currentStatus.enforcementsCount.incrementAndGet()
+                    currentStatus.recordEnforcement(module.name, targetModule.name)
                 }
 
                 if (replacements.isNotEmpty()) {
@@ -201,6 +150,7 @@ private fun enforceModulesConsistency() {
                 updateStatusBar()
             }
         }
+        ProjectRootManager.getInstance(project).incModificationCount()
     }
 
     private fun extractArtifactId(libraryName: String): String? {

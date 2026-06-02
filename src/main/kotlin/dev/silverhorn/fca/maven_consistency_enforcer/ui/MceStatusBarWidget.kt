@@ -14,6 +14,10 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.ClickListener
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
@@ -56,18 +60,18 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
         icon = AllIcons.Gutter.WriteAccess // +++++++
         border = JBUI.Borders.empty(0, 4)
 
-        // Ein nativer, unverwüstlicher Swing-Klick-Listener
+        // Ein nativer, unverw?stlicher Swing-Klick-Listener
         object : ClickListener() {
             override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
                 try {
                     val popup = createStatusPopup()
-                    // Zeigt das Popup exakt an der geklickten Maus-Koordinate (100% verlässlich)
+                    // Zeigt das Popup exakt an der geklickten Maus-Koordinate (100% verl?sslich)
 //                    popup.show(RelativePoint(event))
                     popup.showAbove(this@MceStatusBarWidget.component)
                 } catch (e: Throwable) {
                     Messages.showErrorDialog(
                         project,
-                        "Fehler beim Öffnen des Status-Popups:\n${e.message}",
+                        "Fehler beim ?ffnen des Status-Popups:\n${e.message}",
                         "MCE Widget Crash"
                     )
                 }
@@ -126,7 +130,7 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
 //            cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 //        }
         val settingsButton = JButton(AllIcons.General.GearPlain).apply {
-            toolTipText = "Einstellungen öffnen"
+            toolTipText = "Einstellungen ?ffnen"
             isBorderPainted = false
             isContentAreaFilled = false
             cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -163,7 +167,21 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
             metricsPanel.add(JBLabel("ignored modules:"))
             metricsPanel.add(JBLabel(status.ignoredModules.get().toString()))
             metricsPanel.add(JBLabel("enforced module usage:"))
-            metricsPanel.add(JBLabel(status.enforcementsCount.get().toString()))
+            metricsPanel.add(JBLabel(status.enforcementsCount.get().toString()).apply {
+                if (status.enforcedDependencies.isNotEmpty()) {
+                    // Als anklickbaren "Link" darstellen
+                    foreground = JBColor(0x589DF6, 0x589DF6)
+                    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                    toolTipText = "Details anzeigen"
+                    val valueLabel = this
+                    object : ClickListener() {
+                        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+                            showEnforcedDependenciesPopup(valueLabel, status.enforcedDependencies)
+                            return true
+                        }
+                    }.installOn(valueLabel)
+                }
+            })
             metricsPanel.add(JBLabel("processed dependencies:"))
             metricsPanel.add(JBLabel("${status.processedLibraries}"))
         }
@@ -180,5 +198,71 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
             .setCancelOnClickOutside(true)
             .createPopup()
         return popup
+    }
+
+    private fun showEnforcedDependenciesPopup(
+        anchor: JComponent,
+        enforced: Map<String, MutableList<String>>
+    ) {
+        if (enforced.isEmpty()) return
+
+        // Flache Zeilen: Module nur in erster Zeile, danach leer (gruppiert wirkend)
+        val rows = mutableListOf<Array<String>>()
+        enforced.entries
+            .sortedBy { it.key }
+            .forEach { (module, targets) ->
+                targets.toList().sorted().forEachIndexed { idx, target ->
+                    rows.add(arrayOf(if (idx == 0) module else "", target))
+                }
+            }
+
+        val columns = arrayOf<Any>("Module", "Module-Dependency")
+        val model = object : javax.swing.table.DefaultTableModel(rows.toTypedArray(), columns) {
+            override fun isCellEditable(row: Int, column: Int): Boolean = false
+        }
+        val table = JBTable(model).apply {
+            setShowGrid(false)
+            intercellSpacing = java.awt.Dimension(0, 0)
+            rowHeight = JBUI.scale(20)
+            tableHeader.reorderingAllowed = false
+            autoResizeMode = JTable.AUTO_RESIZE_OFF
+            autoCreateRowSorter = false
+        }
+        // Spaltenbreiten anhand des Inhalts approximieren
+        val fm = table.getFontMetrics(table.font)
+        val col0Width = (rows.maxOfOrNull { fm.stringWidth(it[0]) } ?: 80)
+            .coerceAtLeast(fm.stringWidth("Module"))
+        val col1Width = (rows.maxOfOrNull { fm.stringWidth(it[1]) } ?: 200)
+            .coerceAtLeast(fm.stringWidth("Module-Dependency"))
+        table.columnModel.getColumn(0).preferredWidth = col0Width + JBUI.scale(24)
+        table.columnModel.getColumn(1).preferredWidth = col1Width + JBUI.scale(24)
+
+        val scroll = JBScrollPane(table).apply {
+            border = BorderFactory.createEmptyBorder()
+            val prefW = (col0Width + col1Width + JBUI.scale(80)).coerceAtMost(JBUI.scale(900))
+            val prefH = (rows.size * table.rowHeight + table.tableHeader.preferredSize.height + JBUI.scale(8))
+                .coerceAtMost(JBUI.scale(480))
+            preferredSize = java.awt.Dimension(prefW, prefH)
+        }
+
+        val container = JPanel(BorderLayout()).apply {
+            border = JBUI.Borders.empty(8)
+            add(JBLabel("Enforced module dependencies").apply {
+                font = font.deriveFont(java.awt.Font.BOLD)
+                border = JBUI.Borders.emptyBottom(6)
+            }, BorderLayout.NORTH)
+            add(scroll, BorderLayout.CENTER)
+        }
+
+        val popup = JBPopupFactory.getInstance()
+            .createComponentPopupBuilder(container, table)
+            .setTitle("Enforced Module Dependencies")
+            .setMovable(true)
+            .setResizable(true)
+            .setRequestFocus(true)
+            .setFocusable(true)
+            .setCancelOnClickOutside(true)
+            .createPopup()
+        popup.show(RelativePoint(anchor, java.awt.Point(0, anchor.height)))
     }
 }
