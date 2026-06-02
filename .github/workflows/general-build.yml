@@ -43,9 +43,6 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle Wrapper
-        run: ./gradlew buildPlugin
-
       - name: Delete targeted Maven Package Version
         uses: actions/delete-package-versions@v5
         with:
@@ -54,6 +51,9 @@ jobs:
           package-type: 'maven'
           # Übergibt die Version aus dem manuellen Start-Input oben
           version-names: ${{ github.ref_name }}
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew buildPlugin
 
       - name: Publish Snapshot to GitHub Packages
         run: |
