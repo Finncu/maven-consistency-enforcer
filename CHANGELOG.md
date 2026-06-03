@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `forceLocalModules` and repository health check will be questioned on first run
 - Enhanced enforcement features
 
+### Fixed
+- Status tracking widget now reliably updates after a run
+
 ## [1.2.0] - 2026-05-21
 
 ### Added
