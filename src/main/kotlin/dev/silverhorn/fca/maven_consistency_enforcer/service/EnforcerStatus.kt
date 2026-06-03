@@ -15,7 +15,7 @@ data class EnforcerStatus(
      * Spiegelt wider, welche Maven-Library-Eintrge durch Modul-Eintrge ersetzt wurden.
      */
     val enforcedDependencies: MutableMap<String, MutableList<String>> = ConcurrentHashMap(),
-    @Volatile var lastUpdated: String = EnforcerBundle.message("service.enforcer.status.notYetExecuted"),
+    @Volatile var lastUpdated: String? = null,
     @Volatile var durationMs: Long = 0
 ) {
     fun reset() {

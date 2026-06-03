@@ -35,7 +35,7 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
                     indicator.isIndeterminate = true
 
                     // Übergabe der Einstellungen an den Service
-                    enforcerService.runConsistencyCheck()
+                    enforcerService.runConsistencyEnforcement()
 
                     var changeCount = enforcerService.currentStatus.enforcementsCount.get() + enforcerService.currentStatus.removedAttachedJars.get()
 

@@ -49,13 +49,15 @@ class EnforcerService(private val project: Project) {
         else false
     }
 
-    fun runConsistencyCheck() {
+    fun runConsistencyEnforcement() {
         ApplicationManager.getApplication().invokeAndWait {
             settings.state.enforceModuleLinking ?: chooseEnforceModuleLinking(project, settings.state)
         }
 
         val startTime = System.currentTimeMillis()
         currentStatus.reset()
+        currentStatus.lastUpdated =
+            LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
 
         logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.start", moduleManager.modules.size))
 

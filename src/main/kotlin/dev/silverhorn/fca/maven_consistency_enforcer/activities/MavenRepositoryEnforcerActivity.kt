@@ -1,7 +1,6 @@
 package dev.silverhorn.fca.maven_consistency_enforcer.activities
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
@@ -11,16 +10,11 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.Messages
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.suspendCancellableCoroutine
-import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
+import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsState
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
-import kotlin.coroutines.resume
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.io.File
 
@@ -109,6 +103,9 @@ class MavenRepositoryEnforcerActivity : ProjectActivity {
                             project,
                             EnforcerBundle.message("activity.mavenRepositoryEnforcer.brokenRepoConfig.fixCompleted")
                         )
+                        val enforcerService = project.service<EnforcerService>()
+                        if (null == project.service<EnforcerService>().currentStatus.lastUpdated)
+                            enforcerService.runConsistencyEnforcement()
                     }
                 } catch (e: Exception) {
                     MceNotification.showError(

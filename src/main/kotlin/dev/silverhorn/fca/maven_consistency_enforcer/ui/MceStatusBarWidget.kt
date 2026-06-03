@@ -186,7 +186,7 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
             metricsPanel.add(JBLabel("${status.processedLibraries}"))
         }
         metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.lastRun")))
-        metricsPanel.add(JBLabel("${status.lastUpdated} (${status.durationMs} ms)"))
+        metricsPanel.add(JBLabel(status.lastUpdated?.let { "${status.lastUpdated} (${status.durationMs} ms)"}?:EnforcerBundle.message("service.enforcer.status.notYetExecuted")))
 
         contentPanel.add(metricsPanel, BorderLayout.CENTER)
         mainPanel.add(contentPanel, BorderLayout.CENTER)
