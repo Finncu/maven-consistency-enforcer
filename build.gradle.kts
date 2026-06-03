@@ -59,19 +59,26 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         name = providers.gradleProperty("pluginName")
-        // Extract the description from plugin.xml
-        description = providers.fileContents(layout.projectDirectory.file("src/main/resources/META-INF/plugin.xml")).asText.map {
-            val start = "<description>"
-            val end = "</description>"
+        // Extract the description from README.md so the description can be maintained in one place
+        description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+            // We expect a top-level heading like: '# Maven Consistency Enforcer (MCE)'
+            // and stop at the next level-2 heading (e.g. '## Screenshots').
+            val lines = it.lines().map { line -> Regex("^[ ]*").replaceFirst(line, "") }
+            val startHeaderRegex = Regex("^#\\s+Maven Consistency Enforcer.*", RegexOption.IGNORE_CASE)
+            val startIndex = lines.indexOfFirst { startHeaderRegex.matches(it) }
+            val endIndex = lines.indexOfFirst { it.startsWith("## ") && it.trim().isNotEmpty() }
 
-            with(it.replace("]]>", "").replace("<![CDATA[", "").lines().map { line ->
-                Regex("^[ ]*").replaceFirst(line, "")
-            }) {
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in plugin.xml:\n$start ... $end")
-                }
-                subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
+            if (startIndex == -1) {
+                throw GradleException("README section 'Maven Consistency Enforcer' not found. Please add a top-level heading '# Maven Consistency Enforcer' to README.md or update the build script.")
             }
+
+            val contentLines = if (endIndex != -1 && endIndex > startIndex) {
+                lines.subList(startIndex + 1, endIndex)
+            } else {
+                lines.subList(startIndex + 1, lines.size)
+            }
+
+            contentLines.joinToString("\n").let { markdown -> markdownToHTML(markdown) }
         }
 
         val changelog = project.changelog // local variable for configuration cache compatibility
