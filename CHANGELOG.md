@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-03
+
 ### Added
 
 - Localization support
@@ -20,8 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced enforcement features
 
 ### Fixed
+
 - Status tracking widget now reliably updates after a run
- 
+
 ### Technical
 
 - Updated plugin build to extract the plugin description from `README.md` (Gradle) to centralize documentation and avoid duplication (commit: 9033a19).
@@ -79,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Designed following fdm-plugin best practices with Gradle version catalog and property management
 
-[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.3.0...HEAD
+[1.3.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.0.0...1.2.0
 [1.0.0]: https://github.com/finncu/maven-consistency-enforcer/commits/1.0.0
