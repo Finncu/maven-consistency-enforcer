@@ -30,28 +30,28 @@ class EnforcerService(private val project: Project) {
     private val mavenProjectsManager: MavenProjectsManager by lazy { project.service() }
     private val settings: EnforcerSettingsStateService by lazy { project.service() }
 
-    private val mvnPattern by lazy { Regex("^Maven: ?[^ :]+:([^ :]+)") }
-    private val gavPattern by lazy { Regex("[^ :]+:([^ :]+):[^ :]+.*") }
+    private val mvnPattern by lazy { Regex(EnforcerConstants.MAVEN_PATTERN) }
+    private val gavPattern by lazy { Regex(EnforcerConstants.GAV_PATTERN) }
 
     val currentStatus = EnforcerStatus()
 
-    private fun chooseenforceModuleLinking(project: Project, state: EnforcerSettingsState): Boolean {
+    private fun chooseEnforceModuleLinking(project: Project, state: EnforcerSettingsState): Boolean {
         val res = Messages.showYesNoDialog(
             project,
             EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.message"),
             EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.title"),
             Messages.getQuestionIcon()
         )
-        if (res != Messages.CANCEL)
-            return (Messages.YES == res).let {
-                state.enforceModuleLinking = it; return it
+        return if (res != Messages.CANCEL)
+            (Messages.YES == res).apply {
+                state.enforceModuleLinking = this
             }
-        else return false
+        else false
     }
 
     fun runConsistencyCheck() {
         ApplicationManager.getApplication().invokeAndWait {
-            settings.state.enforceModuleLinking ?: chooseenforceModuleLinking(project, settings.state)
+            settings.state.enforceModuleLinking ?: chooseEnforceModuleLinking(project, settings.state)
         }
 
         val startTime = System.currentTimeMillis()
@@ -67,10 +67,16 @@ class EnforcerService(private val project: Project) {
         ProjectRootManager.getInstance(project).incModificationCount()
 
         // Status-Meta-Informationen belegen
-        currentStatus.lastUpdated = LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
+        currentStatus.lastUpdated =
+            LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
         currentStatus.durationMs = System.currentTimeMillis() - startTime
 
-        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.completed", currentStatus.enforcementsCount))
+        logger.info(
+            EnforcerBundle.message(
+                "service.enforcer.consistencyCheck.completed",
+                currentStatus.enforcementsCount
+            )
+        )
 
         // UI Thread-sicher benachrichtigen
         updateStatusBar()
@@ -146,7 +152,8 @@ class EnforcerService(private val project: Project) {
     private fun updateStatusBar() {
         ApplicationManager.getApplication().invokeLater {
             if (!project.isDisposed) {
-                WindowManager.getInstance().getStatusBar(project)?.updateWidget(MceStatusBarWidget.ID)
+                (WindowManager.getInstance().getStatusBar(project)
+                    ?.getWidget(MceStatusBarWidget.ID) as? MceStatusBarWidget)?.updateLabelText()
             }
         }
     }
