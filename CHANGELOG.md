@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Status tracking widget now reliably updates after a run
+ 
+### Technical
+
+- Updated plugin build to extract the plugin description from `README.md` (Gradle) to centralize documentation and avoid duplication (commit: 9033a19).
+- CI / pipeline improvements: test-pipeline adjustments and revisions to the publish command; some package deletion steps were commented out to avoid accidental removals (commits on 2026-06-03).
+- Repository and documentation housekeeping: README and CHANGELOG updates and small merge/cleanup commits.
 
 ## [1.2.0] - 2026-05-21
 
