@@ -29,10 +29,4 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
 
         enforcerService.runConsistencyEnforcement()
     }
-
-    override fun projectResolutionFinished(mavenProjects: Collection<MavenProject?>?) {
-        MceNotification.showInfo(project, "smeagol")
-
-        super.projectResolutionFinished(mavenProjects)
-    }
 }

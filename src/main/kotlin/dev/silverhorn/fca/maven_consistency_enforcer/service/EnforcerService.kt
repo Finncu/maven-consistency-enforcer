@@ -202,16 +202,18 @@ class EnforcerService(private val project: Project) {
             override fun run(indicator: ProgressIndicator) {
                 try {
                     val mavenManager = MavenProjectsManager.getInstance(project) ?: return
-                    val mavenSettings = mavenManager.generalSettings
 
-                    val expectedRepoPath = mavenSettings.localRepository ?: return
-                    val expectedCanonical = File(expectedRepoPath).canonicalPath
+                    val expectedRepoPath = mavenManager.repositoryPath
+                    val expectedCanonical = File(expectedRepoPath.toString()).canonicalPath
 
                     // Das ist der Standard-Fallback-Pfad, in den IntelliJ wegen des Bugs rutscht
-                    val defaultM2Path = File(System.getProperty("user.home"), ".m2/repository").canonicalPath
+                    val defaultM2Path = File(
+                        System.getProperty(EnforcerConstants.SYSTEM_PROP_USER_HOME),
+                        EnforcerConstants.DEFAULT_M2_RELATIVE_PATH
+                    ).canonicalPath
 
                     // Wenn das erwartete Repository ohnehin das Default-Verzeichnis ist, liegt der Bug hier nicht vor
-                    if (expectedCanonical == defaultM2Path) return
+                    if (expectedRepoPath.toString() == defaultM2Path) return
                     val stateService: EnforcerSettingsStateService = project.service()
 
                     if (!(stateService.state.runInitialHealthCheck ?: chooseInitialHealthCheck(
@@ -240,27 +242,27 @@ class EnforcerService(private val project: Project) {
 
                     // Wenn der Classpath korrupt ist, triggern wir gezielt den Reimport für die Maven-Projekte
                     if (internalClasspathIsBuggy) {
-                        logger.warn("IntelliJ Bug IDEA-377511 detected")
+                        logger.warn(EnforcerBundle.message("activity.mavenRepositoryEnforcer.ideaBugDetected"))
 
                         val mavenProjects = mavenManager.projects
                         if (mavenProjects.isNotEmpty()) {
-//                            runBlocking {// weiche . einstellungen - konfigurierbar
-//                                when (chooseMavenActionSuspended(project)) {
-                            when (readFuckerConfiguration(project)) {
+                            when (project.service<EnforcerSettingsStateService>().state.mavenReloadType) {
                                 MavenReloadType.SCHEDULE_IMPORT_RESOLVE -> mavenManager.scheduleImportAndResolve()
                                 MavenReloadType.FORCED -> mavenManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
                             }
+                        } else {
+                            MceNotification.showInfo(
+                                project,
+                                EnforcerBundle.message("activity.mavenRepositoryEnforcer.noMavenProjects")
+                            )
+                        }
 
-//                            }
-                        } else MceNotification.showInfo(project, "no projects")
-
-                        //                             mavenManager.scheduleImportAndResolve()
                         MceNotification.showInfo(
                             project,
                             EnforcerBundle.message("activity.mavenRepositoryEnforcer.brokenRepoConfig.fixCompleted")
                         )
                     } else MceNotification.showInfo(
-                        project, "no problems detected"
+                        project, EnforcerBundle.message("activity.mavenRepositoryEnforcer.noProblemsDetected")
                     )
 
 
@@ -287,14 +289,10 @@ class EnforcerService(private val project: Project) {
                 Messages.getQuestionIcon()
             )
         }
-        if (res == null) throw IllegalStateException("Bad things happened")
+        if (res == null) throw IllegalStateException(EnforcerBundle.message("activity.mavenRepositoryEnforcer.badState"))
         return if (res != Messages.CANCEL) (Messages.YES == res).apply {
             state.runInitialHealthCheck = this
         }
         else false
-    }
-
-    private fun readFuckerConfiguration(project: Project): MavenReloadType {
-        return project.service<EnforcerSettingsStateService>().state.mavenReloadType
     }
 }

@@ -102,7 +102,7 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                     comboBox(MavenReloadType.entries)
                         .bindItem(
                             getter = { state.mavenReloadType },
-                            setter = { value -> state.mavenReloadType = value ?: MavenReloadType.SYNC }
+                            setter = { value -> state.mavenReloadType = value ?: MavenReloadType.FORCED }
                         )
                 }
             }
