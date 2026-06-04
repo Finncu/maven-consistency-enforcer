@@ -90,10 +90,19 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
 
             group(EnforcerBundle.message("settings.configurable.logging.group")) {
                 row(EnforcerBundle.message("settings.configurable.logging.logLevel.label")) {
-                    comboBox(LogLevel.values().toList())
+                    comboBox(LogLevel.entries)
                         .bindItem(
                             getter = { state.logLevel },
                             setter = { value -> state.logLevel = value ?: LogLevel.INFO }
+                        )
+                }
+            }
+            group(EnforcerBundle.message("settings.configurable.mavenReload.group")) {
+                row(EnforcerBundle.message("settings.configurable.mavenReload.reloadType.label")) {
+                    comboBox(MavenReloadType.entries)
+                        .bindItem(
+                            getter = { state.mavenReloadType },
+                            setter = { value -> state.mavenReloadType = value ?: MavenReloadType.SYNC }
                         )
                 }
             }

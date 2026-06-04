@@ -16,7 +16,6 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
 
     private val logger = Logger.getInstance(MceMavenReloadListener::class.java)
     private val enforcerService: EnforcerService by lazy { project.service() }
-    private val progressManager: ProgressManager by lazy { ProgressManager.getInstance() }
     private val settings: EnforcerSettingsStateService by lazy { project.service<EnforcerSettingsStateService>() }
 
     override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<com.intellij.openapi.module.Module>) {
@@ -28,26 +27,12 @@ class MceMavenReloadListener(private val project: Project) : MavenImportListener
 
         MceNotification.showInfo(project, EnforcerBundle.message("listener.mavenReload.info.checkingConsistency"))
 
-        progressManager.run(object : Task.Backgroundable(project, EnforcerBundle.message("listener.mavenReload.task.title"), false) {
-            override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
-                try {
-                    indicator.text = EnforcerBundle.message("listener.mavenReload.task.indicatorText")
-                    indicator.isIndeterminate = true
+        enforcerService.runConsistencyEnforcement()
+    }
 
-                    // Übergabe der Einstellungen an den Service
-                    enforcerService.runConsistencyEnforcement()
+    override fun projectResolutionFinished(mavenProjects: Collection<MavenProject?>?) {
+        MceNotification.showInfo(project, "smeagol")
 
-                    var changeCount = enforcerService.currentStatus.enforcementsCount.get() + enforcerService.currentStatus.removedAttachedJars.get()
-
-                    if (changeCount > 0) {
-                        MceNotification.showInfo(project, EnforcerBundle.message("listener.mavenReload.info.fixedDependencies", changeCount))
-                    }
-                } catch (e: Exception) {
-                    logger.error(EnforcerBundle.message("listener.mavenReload.error.enforcement"))
-                    MceNotification.showError(project, EnforcerBundle.message("listener.mavenReload.error.enforcementWithMessage", e.message?:""))
-                    throw e
-                }
-            }
-        })
+        super.projectResolutionFinished(mavenProjects)
     }
 }

@@ -6,19 +6,26 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.WindowManager
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerConstants
+import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsState
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
+import dev.silverhorn.fca.maven_consistency_enforcer.settings.MavenReloadType
 import dev.silverhorn.fca.maven_consistency_enforcer.ui.MceStatusBarWidget
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import java.io.File
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -29,6 +36,8 @@ class EnforcerService(private val project: Project) {
     private val moduleManager: ModuleManager by lazy { project.service() }
     private val mavenProjectsManager: MavenProjectsManager by lazy { project.service() }
     private val settings: EnforcerSettingsStateService by lazy { project.service() }
+    private val progressManager: ProgressManager by lazy { ProgressManager.getInstance() }
+
 
     private val mvnPattern by lazy { Regex(EnforcerConstants.MAVEN_PATTERN) }
     private val gavPattern by lazy { Regex(EnforcerConstants.GAV_PATTERN) }
@@ -42,46 +51,73 @@ class EnforcerService(private val project: Project) {
             EnforcerBundle.message("service.enforcer.enforceModuleLinking.dialog.title"),
             Messages.getQuestionIcon()
         )
-        return if (res != Messages.CANCEL)
-            (Messages.YES == res).apply {
-                state.enforceModuleLinking = this
-            }
+        return if (res != Messages.CANCEL) (Messages.YES == res).apply {
+            state.enforceModuleLinking = this
+        }
         else false
     }
 
     fun runConsistencyEnforcement() {
-        ApplicationManager.getApplication().invokeAndWait {
-            settings.state.enforceModuleLinking ?: chooseEnforceModuleLinking(project, settings.state)
-        }
+        progressManager.run(object :
+            Task.Backgroundable(project, EnforcerBundle.message("listener.mavenReload.task.title"), false) {
+            override fun run(indicator: ProgressIndicator) {
+                try {
+                    indicator.text = EnforcerBundle.message("listener.mavenReload.task.indicatorText")
+                    indicator.isIndeterminate = true
 
-        val startTime = System.currentTimeMillis()
-        currentStatus.reset()
-        currentStatus.lastUpdated =
-            LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
+                    // Übergabe der Einstellungen an den Service
+                    ApplicationManager.getApplication().invokeAndWait {
+                        settings.state.enforceModuleLinking ?: chooseEnforceModuleLinking(project, settings.state)
+                    }
 
-        logger.info(EnforcerBundle.message("service.enforcer.consistencyCheck.start", moduleManager.modules.size))
+                    val startTime = System.currentTimeMillis()
+                    currentStatus.reset()
+                    currentStatus.lastUpdated =
+                        LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
 
-        ApplicationManager.getApplication().invokeAndWait {
-            if (settings.state.enforceModuleLinking!!)
-                enforceModulesConsistency()
-            cleanupAttachedJars()
-        }
-        ProjectRootManager.getInstance(project).incModificationCount()
+                    logger.info(
+                        EnforcerBundle.message(
+                            "service.enforcer.consistencyCheck.start", moduleManager.modules.size
+                        )
+                    )
 
-        // Status-Meta-Informationen belegen
-        currentStatus.lastUpdated =
-            LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
-        currentStatus.durationMs = System.currentTimeMillis() - startTime
+                    ApplicationManager.getApplication().invokeAndWait {
+                        if (settings.state.enforceModuleLinking!!) enforceModulesConsistency()
+                        cleanupAttachedJars()
+                    }
+                    ProjectRootManager.getInstance(project).incModificationCount()
 
-        logger.info(
-            EnforcerBundle.message(
-                "service.enforcer.consistencyCheck.completed",
-                currentStatus.enforcementsCount
-            )
-        )
+                    // Status-Meta-Informationen belegen
+                    currentStatus.lastUpdated =
+                        LocalTime.now().format(DateTimeFormatter.ofPattern(EnforcerConstants.DATE_FORMAT_PATTERN))
+                    currentStatus.durationMs = System.currentTimeMillis() - startTime
 
-        // UI Thread-sicher benachrichtigen
-        updateStatusBar()
+                    logger.info(
+                        EnforcerBundle.message(
+                            "service.enforcer.consistencyCheck.completed", currentStatus.enforcementsCount
+                        )
+                    )
+
+                    // UI Thread-sicher benachrichtigen
+                    updateStatusBar()
+
+                    var changeCount = currentStatus.enforcementsCount.get() + currentStatus.removedAttachedJars.get()
+
+                    if (changeCount > 0) {
+                        MceNotification.showInfo(
+                            project, EnforcerBundle.message("listener.mavenReload.info.fixedDependencies", changeCount)
+                        )
+                    }
+                } catch (e: Exception) {
+                    logger.error(EnforcerBundle.message("listener.mavenReload.error.enforcement"))
+                    MceNotification.showError(
+                        project,
+                        EnforcerBundle.message("listener.mavenReload.error.enforcementWithMessage", e.message ?: "")
+                    )
+                    throw e
+                }
+            }
+        })
     }
 
     fun cleanupAttachedJars() {
@@ -144,10 +180,9 @@ class EnforcerService(private val project: Project) {
     }
 
     private fun extractArtifactId(libraryName: String): String? {
-        val gavRes: String? = mvnPattern.find(libraryName)?.groupValues[1]
-            ?: gavPattern.find(libraryName)?.groupValues[1]
-        if (gavRes == null)
-            logger.warn(EnforcerBundle.message("service.enforcer.gavMismatch.warning", libraryName))
+        val gavRes: String? =
+            mvnPattern.find(libraryName)?.groupValues[1] ?: gavPattern.find(libraryName)?.groupValues[1]
+        if (gavRes == null) logger.warn(EnforcerBundle.message("service.enforcer.gavMismatch.warning", libraryName))
         return gavRes
     }
 
@@ -158,5 +193,108 @@ class EnforcerService(private val project: Project) {
                     ?.getWidget(MceStatusBarWidget.ID) as? MceStatusBarWidget)?.updateLabelText()
             }
         }
+    }
+
+    fun runMavenConfigurationCheck() {
+        progressManager.run(object : Task.Backgroundable(
+            project, EnforcerBundle.message("activity.mavenRepositoryEnforcer.brokenRepoConfig.syncing"), false
+        ) {
+            override fun run(indicator: ProgressIndicator) {
+                try {
+                    val mavenManager = MavenProjectsManager.getInstance(project) ?: return
+                    val mavenSettings = mavenManager.generalSettings
+
+                    val expectedRepoPath = mavenSettings.localRepository ?: return
+                    val expectedCanonical = File(expectedRepoPath).canonicalPath
+
+                    // Das ist der Standard-Fallback-Pfad, in den IntelliJ wegen des Bugs rutscht
+                    val defaultM2Path = File(System.getProperty("user.home"), ".m2/repository").canonicalPath
+
+                    // Wenn das erwartete Repository ohnehin das Default-Verzeichnis ist, liegt der Bug hier nicht vor
+                    if (expectedCanonical == defaultM2Path) return
+                    val stateService: EnforcerSettingsStateService = project.service()
+
+                    if (!(stateService.state.runInitialHealthCheck ?: chooseInitialHealthCheck(
+                            project, stateService.state
+                        ))
+                    ) return
+
+                    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+                    var internalClasspathIsBuggy = false
+
+                    for (library in libraryTable.libraries) {
+                        // Wir prüfen die URLs der Classes der Libraries
+                        val urls = library.getUrls(OrderRootType.CLASSES)
+                        for (url in urls) {
+                            if (!url.contains(expectedCanonical)) {
+                                internalClasspathIsBuggy = true
+                                MceNotification.showInfo(
+                                    project,
+                                    EnforcerBundle.message("activity.mavenRepositoryEnforcer.brokenRepoConfig.info")
+                                )
+                                break
+                            }
+                        }
+                        if (internalClasspathIsBuggy) break
+                    }
+
+                    // Wenn der Classpath korrupt ist, triggern wir gezielt den Reimport für die Maven-Projekte
+                    if (internalClasspathIsBuggy) {
+                        logger.warn("IntelliJ Bug IDEA-377511 detected")
+
+                        val mavenProjects = mavenManager.projects
+                        if (mavenProjects.isNotEmpty()) {
+//                            runBlocking {// weiche . einstellungen - konfigurierbar
+//                                when (chooseMavenActionSuspended(project)) {
+                            when (readFuckerConfiguration(project)) {
+                                MavenReloadType.SCHEDULE_IMPORT_RESOLVE -> mavenManager.scheduleImportAndResolve()
+                                MavenReloadType.FORCED -> mavenManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+                            }
+
+//                            }
+                        } else MceNotification.showInfo(project, "no projects")
+
+                        //                             mavenManager.scheduleImportAndResolve()
+                        MceNotification.showInfo(
+                            project,
+                            EnforcerBundle.message("activity.mavenRepositoryEnforcer.brokenRepoConfig.fixCompleted")
+                        )
+                    } else MceNotification.showInfo(
+                        project, "no problems detected"
+                    )
+
+
+                    val enforcerService = project.service<EnforcerService>()
+                    if (null == project.service<EnforcerService>().currentStatus.lastUpdated) enforcerService.runConsistencyEnforcement()
+                } catch (e: Exception) {
+                    MceNotification.showError(
+                        project,
+                        EnforcerBundle.message("listener.mavenReload.error.enforcementWithMessage", e.message ?: "")
+                    )
+                    throw e
+                }
+            }
+        })
+    }
+
+    private fun chooseInitialHealthCheck(project: Project, state: EnforcerSettingsState): Boolean {
+        var res: Int? = null
+        ApplicationManager.getApplication().invokeAndWait {
+            res = Messages.showYesNoDialog(
+                project,
+                EnforcerBundle.message("activity.mavenRepositoryEnforcer.initialHealthCheck.message"),
+                EnforcerBundle.message("activity.mavenRepositoryEnforcer.initialHealthCheck.title"),
+                Messages.getQuestionIcon()
+            )
+        }
+        if (res == null) throw IllegalStateException("Bad things happened")
+        return if (res != Messages.CANCEL) (Messages.YES == res).apply {
+            state.runInitialHealthCheck = this
+        }
+        else false
+    }
+
+    private fun readFuckerConfiguration(project: Project): MavenReloadType {
+        return project.service<EnforcerSettingsStateService>().state.mavenReloadType
     }
 }
