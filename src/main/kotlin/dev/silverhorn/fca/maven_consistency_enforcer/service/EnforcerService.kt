@@ -101,7 +101,7 @@ class EnforcerService(private val project: Project) {
                     // UI Thread-sicher benachrichtigen
                     updateStatusBar()
 
-                    var changeCount = currentStatus.enforcementsCount.get() + currentStatus.removedAttachedJars.get()
+                    val changeCount = currentStatus.enforcementsCount.get() + currentStatus.removedAttachedJars.get()
 
                     if (changeCount > 0) {
                         MceNotification.showInfo(

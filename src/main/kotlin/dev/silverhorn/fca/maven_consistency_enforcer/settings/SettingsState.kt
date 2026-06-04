@@ -17,7 +17,7 @@ data class EnforcerSettingsState(
     var enforceModuleLinking: Boolean? = null,
     var excludedModules: List<String> = emptyList(),
     var logLevel: LogLevel = LogLevel.INFO,
-    var mavenReloadType: MavenReloadType = MavenReloadType.SCHEDULE_IMPORT_RESOLVE,
+    var mavenReloadType: MavenReloadType = MavenReloadType.FORCED,
 
     /** Führt beim Starten des Projekts eine Konsistenzprüfung durch. */
     var runInitialHealthCheck: Boolean? = null

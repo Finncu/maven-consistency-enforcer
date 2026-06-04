@@ -43,8 +43,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-#      - name: Build with Gradle Wrapper
-#        run: ./gradlew buildPlugin
+      - name: Build with Gradle Wrapper
+        run: ./gradlew buildPlugin
 
       - name: Delete Entire Package Repository via GitHub API
         env:
@@ -58,7 +58,7 @@ jobs:
             --method DELETE \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /user/packages/maven/dev.silverhorn.fca.maven-consistency-enforcer
+            /user/packages/maven/dev.silverhorn.fca.maven-consistency-enforcer || echo error on deleting, continuing ...
           
           echo "Das Package wurde erfolgreich vollständig gelöscht."
 
