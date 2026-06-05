@@ -66,7 +66,7 @@ intellijPlatform {
             val lines = it.lines().map { line -> Regex("^[ ]*").replaceFirst(line, "") }
             val startHeaderRegex = Regex("^#\\s+Maven Consistency Enforcer.*", RegexOption.IGNORE_CASE)
             val startIndex = lines.indexOfFirst { startHeaderRegex.matches(it) }
-            val endIndex = lines.indexOfFirst { it.startsWith("// plugin-description-end") && it.trim().isNotEmpty() }
+            val endIndex = lines.indexOfFirst { it.startsWith("[//]: # (plugin-description-end)") && it.trim().isNotEmpty() }
 
             if (startIndex == -1) {
                 throw GradleException("README section 'Maven Consistency Enforcer' not found. Please add a top-level heading '# Maven Consistency Enforcer' to README.md or update the build script.")

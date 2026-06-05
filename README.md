@@ -36,9 +36,9 @@ If you create and tear down workspaces frequently, handling repetitive configura
   </component>
 </project>
 ```
-> example in 
+> example in [mce-settings.xml](.idea/mce-settings.xml)
 
-// plugin-description-end
+[//]: # (plugin-description-end)
 
 ## Screenshots
 
