@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceSettings">
+    <option name="enforceModuleLinking" value="true" />
+    <option name="runInitialHealthCheck" value="true" />
+    <option name="mavenReloadType" value="FORCED" />
+  </component>
+</project>
