@@ -23,6 +23,22 @@ Default behavior:
 - Re-enforces consistency on every Maven reload
 - `forceLocalModules` and repository health check will be questioned on first run
 
+## Templated Workspaces
+
+If you create and tear down workspaces frequently, handling repetitive configuration pop-ups can quickly become tedious. To automate this process and avoid manual confirmations, you can pre-configure your workspace templates. Simply include an mce-settings.xml file inside the template's .idea folder with your preferred defaults:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceSettings">
+    <option name="enforceModuleLinking" value="true" />
+    <option name="runInitialHealthCheck" value="true" />
+    <option name="mavenReloadType" value="FORCED" />
+  </component>
+</project>
+```
+> example in 
+
+// plugin-description-end
 
 ## Screenshots
 
