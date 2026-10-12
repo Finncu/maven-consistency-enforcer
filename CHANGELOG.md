@@ -6,10 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> Theme: decouple MCE from the pure Maven reload lifecycle and evolve it into a
-> configurable **post-reload automation pipeline**. After enforcement runs, MCE can
-> trigger follow-up steps (compile, run configurations, custom tasks) in a defined,
-> observable order.
+## [1.4.0] - 2026-10-12
 
 ### Added
 
@@ -20,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fail-fast handling: stop the pipeline on compile errors and surface them in a notification
   - Debounce / throttle to avoid repeated pipeline runs on rapid successive Maven reloads
   - Manual "Run pipeline now" action plus a quick-action entry in the status bar widget
-
 - **Compile step enhancements**
   - Module-selective compilation: compile only enforced/changed modules instead of the whole project
   - Choice between "Build" and "Rebuild" semantics
@@ -28,22 +24,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - scope (test or without test)
     - in some cases your project is bad and the test sources won't build. In that case you can compile without test sources 
   - Surface compilation results (errors/warnings count) in the status bar widget
-
 - **Run configuration automation**
   - Select one or more existing run configurations to launch after a successful compile
   - Support "Before launch" task chaining and run vs. debug mode selection
   - Optional auto-restart of a long-running configuration (e.g. application server) after reload
-
 - **Custom post-processing tasks**
   - Run arbitrary external tools / scripts after reload (e.g. code generation, annotation processors, npm/gradle sub-tasks)
   - Per-module post-processing configuration
   - Optional cache/stale-output invalidation step before compiling
-
 - **Observability & UX**
   - Per-step timing and outcome reported in the status bar widget popup and in a pipeline summary notification
   - Dry-run / preview mode that lists the planned actions before executing them
   - Extend `mce-settings.xml` template support to cover all new pipeline options for templated workspaces
-
 - persistent workspace settings for post run configs
 
 ## [1.3.0] - 2026-06-04
@@ -123,7 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Designed following fdm-plugin best practices with Gradle version catalog and property management
 
-[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.3.0...HEAD
+[Unreleased]: https://github.com/finncu/maven-consistency-enforcer/compare/1.4.0...HEAD
+[1.4.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.3.0...1.4.0
 [1.3.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/finncu/maven-consistency-enforcer/compare/1.0.0...1.2.0
 [1.0.0]: https://github.com/finncu/maven-consistency-enforcer/commits/1.0.0
