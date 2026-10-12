@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.WindowManager
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerConstants
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
+import dev.silverhorn.fca.maven_consistency_enforcer.pipeline.PostReloadPipelineService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsState
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.EnforcerSettingsStateService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.MavenReloadType
@@ -65,7 +66,7 @@ class EnforcerService(private val project: Project) {
                     indicator.text = EnforcerBundle.message("listener.mavenReload.task.indicatorText")
                     indicator.isIndeterminate = true
 
-                    // Übergabe der Einstellungen an den Service
+                    // ?bergabe der Einstellungen an den Service
                     ApplicationManager.getApplication().invokeAndWait {
                         settings.state.enforceModuleLinking ?: chooseEnforceModuleLinking(project, settings.state)
                     }
@@ -108,6 +109,10 @@ class EnforcerService(private val project: Project) {
                             project, EnforcerBundle.message("listener.mavenReload.info.fixedDependencies", changeCount)
                         )
                     }
+
+                    // Folgeprozess-Pipeline (compile, run configs) ansto?en.
+                    val changedModules = currentStatus.enforcedDependencies.keys.toSet()
+                    project.service<PostReloadPipelineService>().onEnforcementFinished(changeCount, changedModules)
                 } catch (e: Exception) {
                     logger.error(EnforcerBundle.message("listener.mavenReload.error.enforcement"))
                     MceNotification.showError(
@@ -225,7 +230,7 @@ class EnforcerService(private val project: Project) {
                     var internalClasspathIsBuggy = false
 
                     for (library in libraryTable.libraries) {
-                        // Wir prüfen die URLs der Classes der Libraries
+                        // Wir pr?fen die URLs der Classes der Libraries
                         val urls = library.getUrls(OrderRootType.CLASSES)
                         for (url in urls) {
                             if (!url.contains(expectedCanonical)) {
@@ -240,7 +245,7 @@ class EnforcerService(private val project: Project) {
                         if (internalClasspathIsBuggy) break
                     }
 
-                    // Wenn der Classpath korrupt ist, triggern wir gezielt den Reimport für die Maven-Projekte
+                    // Wenn der Classpath korrupt ist, triggern wir gezielt den Reimport f?r die Maven-Projekte
                     if (internalClasspathIsBuggy) {
                         logger.warn(EnforcerBundle.message("activity.mavenRepositoryEnforcer.ideaBugDetected"))
 

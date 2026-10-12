@@ -49,6 +49,13 @@
                 description="Apply automated Maven repository and classpath fixes for your custom repository setup?">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+
+        <action id="dev.silverhorn.fca.maven_consistency_enforcer.settings.MceRunPipelineAction"
+                class="dev.silverhorn.fca.maven_consistency_enforcer.settings.actions.MceRunPipelineAction"
+                text="Maven Consistency Enforcer: Run Pipeline Now"
+                description="Manually run the post-reload automation pipeline (compile + run configurations)">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 
     <projectListeners>

@@ -188,6 +188,19 @@ class MceStatusBarWidget(private val project: Project) : CustomStatusBarWidget, 
         metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.lastRun")))
         metricsPanel.add(JBLabel(status.lastUpdated?.let { "${status.lastUpdated} (${status.durationMs} ms)"}?:EnforcerBundle.message("service.enforcer.status.notYetExecuted")))
 
+        if (status.pipelineRan) {
+            metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.pipeline")))
+            metricsPanel.add(JBLabel("${status.pipelineDurationMs} ms"))
+            metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.compileErrors")))
+            metricsPanel.add(JBLabel(status.lastCompileErrors.get().toString()).apply {
+                if (status.lastCompileErrors.get() > 0) foreground = JBColor.RED
+            })
+            metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.compileWarnings")))
+            metricsPanel.add(JBLabel(status.lastCompileWarnings.get().toString()))
+            metricsPanel.add(JBLabel(EnforcerBundle.message("statusBar.widget.popup.metrics.launchedRunConfigs")))
+            metricsPanel.add(JBLabel(status.launchedRunConfigs.size.toString()))
+        }
+
         contentPanel.add(metricsPanel, BorderLayout.CENTER)
         mainPanel.add(contentPanel, BorderLayout.CENTER)
 
