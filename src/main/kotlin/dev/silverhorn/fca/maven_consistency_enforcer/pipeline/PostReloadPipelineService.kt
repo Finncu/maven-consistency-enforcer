@@ -18,6 +18,7 @@ import com.intellij.util.Alarm
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import dev.silverhorn.fca.maven_consistency_enforcer.notifications.MceNotification
 import dev.silverhorn.fca.maven_consistency_enforcer.service.EnforcerService
+import dev.silverhorn.fca.maven_consistency_enforcer.service.PopupService
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.CompileModuleScope
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.CompileSourceScope
 import dev.silverhorn.fca.maven_consistency_enforcer.settings.CompileType
@@ -38,6 +39,7 @@ class PostReloadPipelineService(private val project: Project) {
     private val logger = Logger.getInstance(PostReloadPipelineService::class.java)
     private val settings: EnforcerSettingsStateService by lazy { project.service() }
     private val moduleManager: ModuleManager by lazy { project.service() }
+    private val popupService: PopupService by lazy { project.service() }
 
     // Entprellung: Schnelle, aufeinanderfolgende Reloads l?sen nur einen Lauf aus.
     private val debounceAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, project)
@@ -51,7 +53,7 @@ class PostReloadPipelineService(private val project: Project) {
      */
     fun onEnforcementFinished(changeCount: Int, changedModules: Set<String>) {
         val state = settings.state
-        if (!state.isEnabled || !state.enablePostReloadPipeline) return
+        if (!state.isEnabled || !(state.enablePostReloadPipeline ?: popupService.choose(PopupService.PopupType.POST_RELOAD_PIPELINE))) return
 
         if (state.onlyRunPipelineOnChanges && changeCount <= 0) {
             logger.info(EnforcerBundle.message("pipeline.notification.skippedNoChanges"))
@@ -74,7 +76,6 @@ class PostReloadPipelineService(private val project: Project) {
 
     private fun runPipeline(changedModules: Set<String>, manual: Boolean) {
         val state = settings.state
-        if (!state.enablePostReloadPipeline && !manual) return
 
         val status = project.service<EnforcerService>().currentStatus
         status.resetPipeline()
@@ -95,7 +96,7 @@ class PostReloadPipelineService(private val project: Project) {
             )
         }
 
-        if (state.enableCompileStep) {
+        if (state.enableCompileStep ?: popupService.choose(PopupService.PopupType.COMPILE_PIPELINE_STEP)) {
             runCompileStep(changedModules, manual, onDone = { aborted, errors ->
                 if (state.failFast && (aborted || errors > 0)) {
                     status.pipelineDurationMs = System.currentTimeMillis() - startTime

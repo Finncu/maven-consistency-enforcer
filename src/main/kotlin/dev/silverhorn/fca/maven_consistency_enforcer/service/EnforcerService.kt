@@ -38,6 +38,7 @@ class EnforcerService(private val project: Project) {
     private val mavenProjectsManager: MavenProjectsManager by lazy { project.service() }
     private val settings: EnforcerSettingsStateService by lazy { project.service() }
     private val progressManager: ProgressManager by lazy { ProgressManager.getInstance() }
+    private val popupService: PopupService by lazy { project.service() }
 
 
     private val mvnPattern by lazy { Regex(EnforcerConstants.MAVEN_PATTERN) }
@@ -221,8 +222,8 @@ class EnforcerService(private val project: Project) {
                     if (expectedRepoPath.toString() == defaultM2Path) return
                     val stateService: EnforcerSettingsStateService = project.service()
 
-                    if (!(stateService.state.runInitialHealthCheck ?: chooseInitialHealthCheck(
-                            project, stateService.state
+                    if (!(stateService.state.runInitialHealthCheck ?: popupService.choose(
+                            PopupService.PopupType.INITIAL_HEALTH_CHECK
                         ))
                     ) return
 
@@ -282,22 +283,5 @@ class EnforcerService(private val project: Project) {
                 }
             }
         })
-    }
-
-    private fun chooseInitialHealthCheck(project: Project, state: EnforcerSettingsState): Boolean {
-        var res: Int? = null
-        ApplicationManager.getApplication().invokeAndWait {
-            res = Messages.showYesNoDialog(
-                project,
-                EnforcerBundle.message("activity.mavenRepositoryEnforcer.initialHealthCheck.message"),
-                EnforcerBundle.message("activity.mavenRepositoryEnforcer.initialHealthCheck.title"),
-                Messages.getQuestionIcon()
-            )
-        }
-        if (res == null) throw IllegalStateException(EnforcerBundle.message("activity.mavenRepositoryEnforcer.badState"))
-        return if (res != Messages.CANCEL) (Messages.YES == res).apply {
-            state.runInitialHealthCheck = this
-        }
-        else false
     }
 }

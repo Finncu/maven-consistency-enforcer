@@ -52,7 +52,7 @@ data class EnforcerSettingsState(
     // --- Post-Reload Automation Pipeline ---
 
     /** Master-Schalter f?r die Folgeprozess-Pipeline nach dem Enforcement. */
-    var enablePostReloadPipeline: Boolean = false,
+    var enablePostReloadPipeline: Boolean? = null,
 
     /** F?hrt die Folgeschritte nur aus, wenn das Enforcement etwas ver?ndert hat. */
     var onlyRunPipelineOnChanges: Boolean = true,
@@ -66,10 +66,10 @@ data class EnforcerSettingsState(
     // --- Compile-Schritt ---
 
     /** Aktiviert den automatischen Compile-Schritt nach dem Reload. */
-    var enableCompileStep: Boolean = false,
+    var enableCompileStep: Boolean? = null,
 
     /** Welche Module kompiliert werden (nur ge?nderte oder das ganze Projekt). */
-    var compileModuleScope: CompileModuleScope = CompileModuleScope.CHANGED_MODULES,
+    var compileModuleScope: CompileModuleScope = CompileModuleScope.WHOLE_PROJECT,
 
     /** Ob Test-Sources mitkompiliert werden. */
     var compileSourceScope: CompileSourceScope = CompileSourceScope.WITHOUT_TESTS,

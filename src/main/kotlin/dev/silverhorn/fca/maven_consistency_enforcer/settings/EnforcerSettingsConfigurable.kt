@@ -91,25 +91,27 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
             }
 
             row {
-                initialMavenSyncCb = checkBox(EnforcerBundle.message("settings.configurable.enableMavenSyncFix.checkbox"))
-                    .bindSelected(
-                                { state.runInitialHealthCheck ?: false }, // Getter: null wird zu false
-                                { state.runInitialHealthCheck = it }      // Setter: schreibt normales Boolean zur?ck
-                            )
-                    // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
-                    .enabledIf(mainEnforcerCb.selected)
-                    .apply { component.name = "initialMavenSyncCb" }
+                initialMavenSyncCb =
+                    checkBox(EnforcerBundle.message("settings.configurable.enableMavenSyncFix.checkbox"))
+                        .bindSelected(
+                            { state.runInitialHealthCheck ?: false }, // Getter: null wird zu false
+                            { state.runInitialHealthCheck = it }      // Setter: schreibt normales Boolean zur?ck
+                        )
+                        // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
+                        .enabledIf(mainEnforcerCb.selected)
+                        .apply { component.name = "initialMavenSyncCb" }
             }
 
             row {
-                moduleEnforcingCb = checkBox(EnforcerBundle.message("settings.configurable.enableLocalModuleUsage.checkbox"))
-                    .bindSelected(
-                                { state.enforceModuleLinking ?: false }, // Getter: null wird zu false
-                                { state.enforceModuleLinking = it }      // Setter: schreibt normales Boolean zur?ck
-                            )
-                    // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
-                    .enabledIf(mainEnforcerCb.selected)
-                    .apply { component.name = "moduleEnforcingCb" }
+                moduleEnforcingCb =
+                    checkBox(EnforcerBundle.message("settings.configurable.enableLocalModuleUsage.checkbox"))
+                        .bindSelected(
+                            { state.enforceModuleLinking ?: false }, // Getter: null wird zu false
+                            { state.enforceModuleLinking = it }      // Setter: schreibt normales Boolean zur?ck
+                        )
+                        // Diese Checkbox graut sich automatisch aus, wenn der Hauptschalter aus ist
+                        .enabledIf(mainEnforcerCb.selected)
+                        .apply { component.name = "moduleEnforcingCb" }
             }
 
             // Die gesamte Gruppe deaktiviert sich visuell, wenn das Haupt-Plugin ausgeschaltet ist
@@ -153,8 +155,11 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
 
                 row {
                     pipelineCb = checkBox(EnforcerBundle.message("settings.configurable.pipeline.enable.checkbox"))
-                        .bindSelected(state::enablePostReloadPipeline)
-                        .enabledIf(mainEnforcerCb.selected)
+                        .bindSelected(
+                            { state.enablePostReloadPipeline ?: false }, // Getter: null wird zu false
+                            { state.enablePostReloadPipeline = it }      // Setter: schreibt normales Boolean zur?ck)
+                        ).enabledIf(mainEnforcerCb.selected)
+                        .apply { component.name = "pipelineCb" }
                 }
                 row {
                     checkBox(EnforcerBundle.message("settings.configurable.pipeline.onlyOnChanges.checkbox"))
@@ -174,16 +179,23 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
 
                 // --- Compile-Schritt ---
                 row {
-                    compileCb = checkBox(EnforcerBundle.message("settings.configurable.pipeline.compile.enable.checkbox"))
-                        .bindSelected(state::enableCompileStep)
-                        .enabledIf(pipelineCb.selected)
+                    compileCb =
+                        checkBox(EnforcerBundle.message("settings.configurable.pipeline.compile.enable.checkbox"))
+                            .bindSelected(
+                                { state.enableCompileStep ?: false }, // Getter: null wird zu false
+                                { state.enableCompileStep = it }      // Setter: schreibt normales Boolean zur?ck
+                            )
+                            .enabledIf(pipelineCb.selected)
+                    .apply { component.name = "compileCb" }
                 }
                 indent {
                     row(EnforcerBundle.message("settings.configurable.pipeline.compile.moduleScope.label")) {
                         comboBox(CompileModuleScope.entries)
                             .bindItem(
                                 getter = { state.compileModuleScope },
-                                setter = { value -> state.compileModuleScope = value ?: CompileModuleScope.CHANGED_MODULES }
+                                setter = { value ->
+                                    state.compileModuleScope = value ?: CompileModuleScope.CHANGED_MODULES
+                                }
                             )
                             .enabledIf(pipelineCb.selected.and(compileCb.selected))
                     }
@@ -191,7 +203,9 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                         comboBox(CompileSourceScope.entries)
                             .bindItem(
                                 getter = { state.compileSourceScope },
-                                setter = { value -> state.compileSourceScope = value ?: CompileSourceScope.WITHOUT_TESTS }
+                                setter = { value ->
+                                    state.compileSourceScope = value ?: CompileSourceScope.WITHOUT_TESTS
+                                }
                             )
                             .enabledIf(pipelineCb.selected.and(compileCb.selected))
                     }
@@ -207,9 +221,10 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
 
                 // --- Run-Configuration-Schritt ---
                 row {
-                    runConfigCb = checkBox(EnforcerBundle.message("settings.configurable.pipeline.runConfig.enable.checkbox"))
-                        .bindSelected(state::enableRunConfigStep)
-                        .enabledIf(pipelineCb.selected)
+                    runConfigCb =
+                        checkBox(EnforcerBundle.message("settings.configurable.pipeline.runConfig.enable.checkbox"))
+                            .bindSelected(state::enableRunConfigStep)
+                            .enabledIf(pipelineCb.selected)
                 }
                 indent {
                     row {
