@@ -6,6 +6,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> Theme: decouple MCE from the pure Maven reload lifecycle and evolve it into a
+> configurable **post-reload automation pipeline**. After enforcement runs, MCE can
+> trigger follow-up steps (compile, run configurations, custom tasks) in a defined,
+> observable order.
+
+### Added
+
+- **Post-reload automation pipeline**
+  - Ordered, configurable step chain: `enforce ? compile ? run configuration ? custom tasks`
+  - Per-step enable/disable toggle with persistent workspace settings
+  - Conditional execution: only run follow-up steps when enforcement actually changed something (skip no-op reloads)
+  - Fail-fast handling: stop the pipeline on compile errors and surface them in a notification
+  - Debounce / throttle to avoid repeated pipeline runs on rapid successive Maven reloads
+  - Manual "Run pipeline now" action plus a quick-action entry in the status bar widget
+
+- **Compile step enhancements**
+  - Module-selective compilation: compile only enforced/changed modules instead of the whole project
+  - Choice between "Build" and "Rebuild" semantics
+  - Optional parallel/incremental compilation hint
+  - scope (test or without test)
+  - Surface compilation results (errors/warnings count) in the status bar widget
+
+- **Run configuration automation**
+  - Select one or more existing run configurations to launch after a successful compile
+  - Support "Before launch" task chaining and run vs. debug mode selection
+  - Optional auto-restart of a long-running configuration (e.g. application server) after reload
+
+- **Custom post-processing tasks**
+  - Run arbitrary external tools / scripts after reload (e.g. code generation, annotation processors, npm/gradle sub-tasks)
+  - Per-module post-processing configuration
+  - Optional cache/stale-output invalidation step before compiling
+
+- **Observability & UX**
+  - Per-step timing and outcome reported in the status bar widget popup and in a pipeline summary notification
+  - Dry-run / preview mode that lists the planned actions before executing them
+  - Extend `mce-settings.xml` template support to cover all new pipeline options for templated workspaces
+
+- persistent workspace settings for post run configs
+
 ## [1.3.0] - 2026-06-04
 
 ### Added
