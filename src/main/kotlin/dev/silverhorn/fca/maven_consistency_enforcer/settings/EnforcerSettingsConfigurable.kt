@@ -6,12 +6,15 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CheckBoxList
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.and
 import dev.silverhorn.fca.maven_consistency_enforcer.EnforcerBundle
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
 
 class EnforcerSettingsConfigurable(private val project: Project) : SearchableConfigurable {
 
@@ -24,6 +27,12 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
 
     // Checkbox-Liste f?r die in der Pipeline zu startenden Run-Configurations
     private val runConfigCheckBoxList = CheckBoxList<String>()
+
+    // Suchfeld zum Filtern der Run-Configurations
+    private val runConfigSearchField = SearchTextField(false)
+
+    // H?lt die Auswahl aller Run-Configurations unabh?ngig von der aktuellen Filterung.
+    private val runConfigSelection = linkedMapOf<String, Boolean>()
 
     override fun getId(): String = "dev.silverhorn.fca.maven_consistency_enforcer.settings"
     override fun getDisplayName(): String = EnforcerBundle.message("settings.configurable.displayName")
@@ -43,15 +52,31 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
             checkBoxList.addItem(moduleName, moduleName, isExcluded)
         }
 
-        // 2b. Verf?gbare Run-Configurations abrufen und Auswahl setzen
+        // 2b. Verf?gbare Run-Configurations abrufen und Auswahl-Map initialisieren
         val allRunConfigs = RunManager.getInstance(project).allSettings
             .map { it.name }
             .sorted()
-        runConfigCheckBoxList.clear()
+        runConfigSelection.clear()
         allRunConfigs.forEach { name ->
-            val isSelected = state.postRunConfigurations.contains(name)
-            runConfigCheckBoxList.addItem(name, name, isSelected)
+            runConfigSelection[name] = state.postRunConfigurations.contains(name)
         }
+
+        // Toggles aus der (gefilterten) Liste in die Auswahl-Map zur?ckschreiben
+        runConfigCheckBoxList.setCheckBoxListListener { index, value ->
+            val name = runConfigCheckBoxList.getItemAt(index) ?: return@setCheckBoxListListener
+            runConfigSelection[name] = value
+        }
+
+        // Suchfeld: filtert die Liste live bei jeder Eingabe
+        runConfigSearchField.textEditor.emptyText.text =
+            EnforcerBundle.message("settings.configurable.pipeline.runConfig.search.placeholder")
+        runConfigSearchField.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+                repopulateRunConfigList(runConfigSearchField.text)
+            }
+        })
+        runConfigSearchField.text = ""
+        repopulateRunConfigList("")
 
         // 3. UI mittels Kotlin UI DSL v2 aufbauen
         uiPanel = panel {
@@ -196,6 +221,10 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
                         label(EnforcerBundle.message("settings.configurable.pipeline.runConfig.label"))
                     }
                     row {
+                        cell(runConfigSearchField)
+                            .align(AlignX.FILL)
+                    }.enabledIf(pipelineCb.selected.and(runConfigCb.selected))
+                    row {
                         val runConfigScroll = JBScrollPane(runConfigCheckBoxList).apply {
                             preferredSize = Dimension(400, 160)
                         }
@@ -236,10 +265,12 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
             val moduleName = checkBoxList.getItemAt(i) ?: continue
             checkBoxList.setItemSelected(moduleName, state.excludedModules.contains(moduleName))
         }
-        for (i in 0 until runConfigCheckBoxList.itemsCount) {
-            val name = runConfigCheckBoxList.getItemAt(i) ?: continue
-            runConfigCheckBoxList.setItemSelected(name, state.postRunConfigurations.contains(name))
+        // Auswahl-Map aus dem gespeicherten Zustand neu aufbauen und Liste (ungefiltert) anzeigen
+        runConfigSelection.keys.toList().forEach { name ->
+            runConfigSelection[name] = state.postRunConfigurations.contains(name)
         }
+        runConfigSearchField.text = ""
+        repopulateRunConfigList("")
     }
 
     override fun disposeUIResources() {
@@ -258,13 +289,20 @@ class EnforcerSettingsConfigurable(private val project: Project) : SearchableCon
     }
 
     private fun getSelectedRunConfigsFromUI(): List<String> {
-        val selected = mutableListOf<String>()
-        for (i in 0 until runConfigCheckBoxList.itemsCount) {
-            val name = runConfigCheckBoxList.getItemAt(i) ?: continue
-            if (runConfigCheckBoxList.isItemSelected(i)) {
-                selected.add(name)
+        return runConfigSelection.filterValues { it }.keys.toList()
+    }
+
+    /**
+     * Baut die Run-Config-Checkbox-Liste neu auf und zeigt nur Eintr?ge, deren Name
+     * den Filter (case-insensitive) enth?lt. Der Auswahlzustand stammt aus der Map.
+     */
+    private fun repopulateRunConfigList(filter: String) {
+        runConfigCheckBoxList.clear()
+        val normalized = filter.trim().lowercase()
+        runConfigSelection.forEach { (name, selected) ->
+            if (normalized.isEmpty() || name.lowercase().contains(normalized)) {
+                runConfigCheckBoxList.addItem(name, name, selected)
             }
         }
-        return selected
     }
 }

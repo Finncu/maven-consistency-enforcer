@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Choice between "Build" and "Rebuild" semantics
   - Optional parallel/incremental compilation hint
   - scope (test or without test)
+    - in some cases your project is bad and the test sources won't build. In that case you can compile without test sources 
   - Surface compilation results (errors/warnings count) in the status bar widget
 
 - **Run configuration automation**
