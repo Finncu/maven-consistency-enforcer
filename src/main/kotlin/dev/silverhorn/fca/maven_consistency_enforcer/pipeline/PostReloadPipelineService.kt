@@ -137,7 +137,7 @@ class PostReloadPipelineService(private val project: Project) {
             val scope: CompileScope = compilerManager.createModulesCompileScope(
                 modules.toTypedArray(),
                 /* includeDependentModules = */ true,
-                /* includeRuntimeDependencies = */ false,
+                /* includeRuntimeDependencies = */ true,
                 /* includeTests = */ includeTests
             )
 
